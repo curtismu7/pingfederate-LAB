@@ -8,6 +8,6 @@
   "composeFile": "docker-compose.yml",
   "composeOverlays": [],
   "port": 5400,
-  "notes": "Host-run: npm install && npm run build && npm start (port 5400, loopback only; mock mode needs no settings). Docker: copy .env.example to .env, then docker compose up --build -d (publishes 127.0.0.1:5400 only). Catalog id A28 is proposed (PROPOSED-CATALOG-ROWS-LABS-2026-10-31.md); renumber here and in content-pack.json if the owner changes it.",
+  "notes": "Host-run: npm install && npm run build && npm start (port 5400, loopback only; mock mode needs no settings). Docker: copy .env.example to .env, then docker compose up --build -d (publishes 127.0.0.1:5400 only). Catalog id A28 is accepted (owner, 2026-10-31).json if the owner changes it.",
   "catalogId": "A28"
 }
