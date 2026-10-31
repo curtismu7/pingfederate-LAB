@@ -1,0 +1,123 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-dcr",
+  "title": "Dynamic client registration",
+  "lede": "An initial access token gates registration; the registration access token deletes the client.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "client_credentials"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "reg",
+      "group": "pf",
+      "label": "Registration endpoint",
+      "sub": [
+        "RFC 7591 / 7592"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "client",
+      "group": "lab",
+      "label": "The new client",
+      "sub": [
+        "PingFederate chose its id and secret"
+      ],
+      "x": 700,
+      "y": 160
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "initial access token (dcr:register)"
+    },
+    {
+      "source": "lab",
+      "target": "reg",
+      "label": "register, no token",
+      "dashed": true
+    },
+    {
+      "source": "lab",
+      "target": "reg",
+      "label": "register with the token"
+    },
+    {
+      "source": "reg",
+      "target": "client",
+      "label": "client_id, secret, registration token"
+    },
+    {
+      "source": "client",
+      "target": "token",
+      "label": "token as the new client"
+    },
+    {
+      "source": "client",
+      "target": "reg",
+      "label": "delete with registration token"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Initial access token",
+      "what": "The registering client gets a dcr:register token.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "Refused, then accepted",
+      "what": "No token: refused. With it: a new client.",
+      "edges": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "title": "Use it",
+      "what": "The new client gets a token; a forbidden scope is refused.",
+      "edges": [
+        4
+      ]
+    },
+    {
+      "title": "Delete",
+      "what": "The client deletes itself and is gone.",
+      "edges": [
+        5
+      ]
+    }
+  ]
+}

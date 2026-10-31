@@ -1,0 +1,66 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-userinfo",
+  "title": "Userinfo",
+  "lede": "The access token reads who the user is; the lab checks it matches the ID token.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds verifiers, cookies, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "ui",
+      "group": "pf",
+      "label": "Userinfo endpoint",
+      "sub": [
+        "Bearer access token"
+      ],
+      "x": 360,
+      "y": 160
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "ui",
+      "label": "GET with Bearer token"
+    },
+    {
+      "source": "ui",
+      "target": "lab",
+      "label": "claims (sub, name, ...)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Ask",
+      "what": "The lab sends the signed-in user's access token.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "Claims",
+      "what": "PingFederate answers with the user's claims; sub must match the ID token.",
+      "edges": [
+        1
+      ]
+    }
+  ]
+}

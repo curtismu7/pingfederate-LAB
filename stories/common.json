@@ -1,0 +1,18 @@
+{
+  "intro": [
+    "{{cast.company}} lets {{cast.agent}}, its {{cast.agentWord}}, act for its {{cast.userWord}}s. Every card below is one thing PingFederate does to keep that safe, run on the built-in mock PingFederate or live against your own.",
+    "Each call goes to PingFederate (the lab's built-in mock, or your own in live mode) and comes back as a raw trace, with secrets redacted and live tokens masked."
+  ],
+  "cards": [
+    "signin",
+    "dcr",
+    "rar",
+    "ciba",
+    "dpop",
+    "tokenExchange",
+    "userinfo",
+    "piflow",
+    "par",
+    "pkce"
+  ]
+}

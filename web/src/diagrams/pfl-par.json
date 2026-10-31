@@ -1,0 +1,104 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-par",
+  "title": "PAR",
+  "lede": "The whole request is pushed; the browser-side request carries only a handle.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "par",
+      "group": "pf",
+      "label": "PAR endpoint",
+      "sub": [
+        "Client authenticates here"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 680,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "Redeems codes, issues tokens"
+      ],
+      "x": 340,
+      "y": 320
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "par",
+      "label": "push the request"
+    },
+    {
+      "source": "par",
+      "target": "lab",
+      "label": "request_uri (one-time)"
+    },
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "client_id + request_uri"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "redeem the code"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Push",
+      "what": "The request goes over the back channel.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Use the handle",
+      "what": "Only client_id and request_uri go to the authorization endpoint.",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "Redeem",
+      "what": "The code is redeemed as usual.",
+      "edges": [
+        3
+      ]
+    }
+  ]
+}

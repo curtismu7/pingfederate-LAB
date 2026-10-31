@@ -1,0 +1,120 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-rar",
+  "title": "RAR via PAR",
+  "lede": "The exact transaction is pushed to PingFederate and lands in the token.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "par",
+      "group": "pf",
+      "label": "PAR endpoint",
+      "sub": [
+        "authorization_details pushed here"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 680,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "authorization_details in the token"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "policy",
+      "group": "pf",
+      "label": "Details check",
+      "sub": [
+        "Refuses details outside policy"
+      ],
+      "x": 680,
+      "y": 320
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "par",
+      "label": "authorization_details (the transaction)"
+    },
+    {
+      "source": "par",
+      "target": "policy",
+      "label": "check the details"
+    },
+    {
+      "source": "par",
+      "target": "lab",
+      "label": "request_uri"
+    },
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "client_id + request_uri"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "code (+ DPoP proof)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Push",
+      "what": "The details go to PingFederate first.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Handle",
+      "what": "PingFederate returns a one-time request_uri.",
+      "edges": [
+        2,
+        3
+      ]
+    },
+    {
+      "title": "Token",
+      "what": "The token carries the approved details, optionally DPoP-bound.",
+      "edges": [
+        4
+      ]
+    }
+  ]
+}

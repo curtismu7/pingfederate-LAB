@@ -1,0 +1,13 @@
+{
+  "id": "pingfederate-lab",
+  "name": "PingFederate LAB",
+  "kind": "Demo",
+  "description": "One shelf with a card for each PingFederate feature behind AI agents: pi.flow sign-in, DCR, RAR with PAR (and DPoP), CIBA, DPoP, token exchange, Userinfo, PAR, PKCE and a protocol playground. Runs on a built-in mock PingFederate (offline) or your own PingFederate (live).",
+  "url": "http://127.0.0.1:5400",
+  "healthPath": "/api/health",
+  "composeFile": "docker-compose.yml",
+  "composeOverlays": [],
+  "port": 5400,
+  "notes": "Host-run: npm install && npm run build && npm start (port 5400, loopback only; mock mode needs no settings). Docker: copy .env.example to .env, then docker compose up --build -d (publishes 127.0.0.1:5400 only). Catalog id A28 is proposed (PROPOSED-CATALOG-ROWS-LABS-2026-10-31.md); renumber here and in content-pack.json if the owner changes it.",
+  "catalogId": "A28"
+}

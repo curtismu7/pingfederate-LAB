@@ -1,0 +1,121 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-ciba",
+  "title": "CIBA",
+  "lede": "The user approves on their own device while the lab polls.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    },
+    "user": {
+      "label": "The person",
+      "color": "blue"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "bc",
+      "group": "pf",
+      "label": "Backchannel endpoint",
+      "sub": [
+        "login_hint, binding_message"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "CIBA grant"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "device",
+      "group": "user",
+      "label": "The user's device",
+      "sub": [
+        "Approve or deny"
+      ],
+      "x": 700,
+      "y": 0
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "bc",
+      "label": "start (auth_req_id comes back)"
+    },
+    {
+      "source": "bc",
+      "target": "device",
+      "label": "ask the user"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "poll: authorization_pending",
+      "dashed": true
+    },
+    {
+      "source": "device",
+      "target": "bc",
+      "label": "approve"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "poll: tokens"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Start",
+      "what": "The lab names the user.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Wait",
+      "what": "Polls answer pending while the user decides.",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "Decide",
+      "what": "The user approves on their device.",
+      "edges": [
+        3
+      ]
+    },
+    {
+      "title": "Tokens",
+      "what": "The next poll returns the tokens.",
+      "edges": [
+        4
+      ]
+    }
+  ]
+}

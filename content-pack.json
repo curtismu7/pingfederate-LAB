@@ -1,0 +1,293 @@
+{
+  "schema": "demo-content-pack/1",
+  "id": "pingfederate-lab",
+  "title": "PingFederate LAB: the features behind AI agents",
+  "version": "1.0.0",
+  "source": {
+    "repo": "ping-sandbox/pingfederate-LAB",
+    "generated": "2026-10-31",
+    "commit": "cdad36b"
+  },
+  "demo": {
+    "id": "pingfederate-lab",
+    "name": "PingFederate LAB",
+    "baseUrl": "http://127.0.0.1:5400",
+    "doctor": "/api/health",
+    "tags": [
+      "pingfederate",
+      "pi-flow",
+      "oauth",
+      "agents"
+    ],
+    "catalog": "A28"
+  },
+  "glossary": [
+    {
+      "id": "pi-flow",
+      "term": "pi.flow",
+      "definition": "An authorization request with response_mode=pi.flow. PingFederate answers with a JSON flow instead of a login page, and the app posts the user's answers to it until the flow says COMPLETED. PingFederate still decides who may sign in."
+    },
+    {
+      "id": "pkce",
+      "term": "PKCE",
+      "definition": "Proof Key for Code Exchange (RFC 7636). The client sends a hash of a secret it created when it starts a sign-in and the secret itself when it redeems the code, so a stolen code is useless on its own."
+    },
+    {
+      "id": "par",
+      "term": "PAR",
+      "definition": "Pushed Authorization Request (RFC 9126). The client sends the authorization request straight to the server and gets back a short reference, so the request cannot be read or changed in the browser."
+    },
+    {
+      "id": "rar",
+      "term": "RAR",
+      "definition": "Rich Authorization Requests (RFC 9396). The request carries structured authorization_details, for example one transfer of an exact amount between two accounts, instead of a broad scope."
+    },
+    {
+      "id": "dpop",
+      "term": "DPoP",
+      "definition": "Demonstrating Proof of Possession (RFC 9449). The token is bound to a key the client holds, and each call carries a signed proof, so a copied token does not work on its own."
+    },
+    {
+      "id": "ciba",
+      "term": "CIBA",
+      "definition": "Client-Initiated Backchannel Authentication. The app asks for a sign-in for a named user, and the user approves on another device; the app polls for the result."
+    },
+    {
+      "id": "dcr",
+      "term": "Dynamic client registration",
+      "definition": "RFC 7591 and RFC 7592. A client registers itself with the authorization server, using a one-time initial access token, and can manage or delete its own registration."
+    },
+    {
+      "id": "token-exchange",
+      "term": "Token exchange",
+      "definition": "RFC 8693. A client sends one token and gets a different one back, for example a token for an agent acting for the user, with an act claim naming the actor."
+    },
+    {
+      "id": "act-claim",
+      "term": "act claim",
+      "definition": "A claim in an exchanged token that names who is acting on behalf of the subject. Nested act claims show a chain of actors."
+    },
+    {
+      "id": "userinfo",
+      "term": "Userinfo endpoint",
+      "definition": "An OpenID Connect endpoint that returns claims about the signed-in user when called with the user's access token."
+    },
+    {
+      "id": "mock-live",
+      "term": "Mock and live mode",
+      "definition": "Mock runs every card against a simulated PingFederate inside the lab, offline. Live sends every call to the PingFederate named in Settings, and only to that one address."
+    }
+  ],
+  "sources": [
+    {
+      "id": "rfc7636",
+      "title": "PKCE (RFC 7636)",
+      "url": "https://www.rfc-editor.org/rfc/rfc7636",
+      "kind": "spec",
+      "use": "Background for the PKCE card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "rfc9126",
+      "title": "Pushed Authorization Requests (RFC 9126)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9126",
+      "kind": "spec",
+      "use": "Background for the PAR card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "rfc9396",
+      "title": "Rich Authorization Requests (RFC 9396)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9396",
+      "kind": "spec",
+      "use": "Background for the RAR card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "rfc9449",
+      "title": "DPoP (RFC 9449)",
+      "url": "https://www.rfc-editor.org/rfc/rfc9449",
+      "kind": "spec",
+      "use": "Background for the DPoP card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "rfc7591",
+      "title": "Dynamic Client Registration (RFC 7591)",
+      "url": "https://www.rfc-editor.org/rfc/rfc7591",
+      "kind": "spec",
+      "use": "Background for the DCR card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "rfc8693",
+      "title": "Token Exchange (RFC 8693)",
+      "url": "https://www.rfc-editor.org/rfc/rfc8693",
+      "kind": "spec",
+      "use": "Background for the token exchange card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    },
+    {
+      "id": "ciba-core",
+      "title": "OpenID CIBA Core 1.0",
+      "url": "https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html",
+      "kind": "spec",
+      "use": "Background for the CIBA card.",
+      "status": "not-read",
+      "checked": "2026-10-31"
+    }
+  ],
+  "cards": [
+    {
+      "id": "start-the-lab",
+      "label": "Start the lab and check it",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/"
+      },
+      "description": "Run npm start, then npm run doctor in another terminal. Mock mode needs no settings.",
+      "terms": [
+        "mock-live"
+      ]
+    },
+    {
+      "id": "pick-mode",
+      "label": "Choose mock or live",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/#/settings"
+      },
+      "description": "The header toggle switches the whole lab. Live needs a PingFederate issuer and the client settings in Settings.",
+      "terms": [
+        "mock-live"
+      ]
+    },
+    {
+      "id": "try-signin",
+      "label": "Sign in with pi.flow",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/signin"
+      },
+      "description": "Open a flow, post a username and password, and read the code PingFederate returns.",
+      "terms": [
+        "pi-flow",
+        "pkce"
+      ]
+    },
+    {
+      "id": "try-dcr",
+      "label": "Register and delete a client",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/dcr"
+      },
+      "description": "Four steps: initial access token, register, use, delete.",
+      "terms": [
+        "dcr"
+      ]
+    },
+    {
+      "id": "try-rar",
+      "label": "Authorize one exact transfer",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/rar"
+      },
+      "description": "RAR sent through PAR, with an optional DPoP-bound token.",
+      "terms": [
+        "rar",
+        "par",
+        "dpop"
+      ]
+    },
+    {
+      "id": "try-ciba",
+      "label": "Approve a request on another device",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/ciba"
+      },
+      "description": "Start a CIBA request for a named user and approve it on the lab's approve step.",
+      "terms": [
+        "ciba"
+      ]
+    },
+    {
+      "id": "try-dpop",
+      "label": "Bind a token to a key",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/dpop"
+      },
+      "description": "Sign in with DPoP and read the proof the client sends.",
+      "terms": [
+        "dpop"
+      ]
+    },
+    {
+      "id": "try-exchange",
+      "label": "Exchange a token twice",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/tokenExchange"
+      },
+      "description": "User token to agent token to MCP token; read the act claim at each hop.",
+      "terms": [
+        "token-exchange",
+        "act-claim"
+      ]
+    },
+    {
+      "id": "try-userinfo",
+      "label": "Read the user's claims",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/run/userinfo"
+      },
+      "description": "Call the Userinfo endpoint with the signed-in user's access token.",
+      "terms": [
+        "userinfo"
+      ]
+    },
+    {
+      "id": "try-playground",
+      "label": "Change a parameter and compare",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#/playground"
+      },
+      "description": "Pick a protocol, change one parameter, run it, and compare the traces."
+    },
+    {
+      "id": "read-pkce-par",
+      "label": "PKCE and PAR, the building blocks",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#/run/pkce"
+      },
+      "description": "The authorization-code flow with a code challenge, then the same request pushed.",
+      "terms": [
+        "pkce",
+        "par"
+      ]
+    }
+  ]
+}

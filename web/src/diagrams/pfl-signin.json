@@ -1,0 +1,136 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-signin",
+  "title": "Sign in with pi.flow",
+  "lede": "The lab's own form drives PingFederate's Authentication API; no redirect.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    },
+    "user": {
+      "label": "The person",
+      "color": "blue"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "authn",
+      "group": "pf",
+      "label": "Authentication API",
+      "sub": [
+        "/pf-ws/authn/flows/{id}"
+      ],
+      "x": 680,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "Redeems codes, issues tokens"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "user",
+      "group": "user",
+      "label": "The person",
+      "sub": [
+        "Types into the lab's own form"
+      ],
+      "x": 680,
+      "y": 320
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "authorize (PKCE challenge)"
+    },
+    {
+      "source": "authz",
+      "target": "lab",
+      "label": "flow: USERNAME_PASSWORD_REQUIRED"
+    },
+    {
+      "source": "user",
+      "target": "lab",
+      "label": "username, password"
+    },
+    {
+      "source": "lab",
+      "target": "authn",
+      "label": "checkUsernamePassword"
+    },
+    {
+      "source": "authn",
+      "target": "lab",
+      "label": "COMPLETED + code"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "code + code_verifier"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Open the flow",
+      "what": "The lab asks for a sign-in flow as JSON.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "The person types",
+      "what": "Username and password go to the lab, then only to PingFederate.",
+      "edges": [
+        2,
+        3
+      ]
+    },
+    {
+      "title": "Code inline",
+      "what": "The completed flow carries the authorization code.",
+      "edges": [
+        4
+      ]
+    },
+    {
+      "title": "Redeem",
+      "what": "The code is redeemed with the PKCE verifier; the ID token is verified.",
+      "edges": [
+        5
+      ]
+    }
+  ]
+}

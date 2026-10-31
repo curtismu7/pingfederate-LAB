@@ -1,0 +1,134 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-token-exchange",
+  "title": "Token exchange, two hops",
+  "lede": "The act claim grows into a nested chain.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    },
+    "user": {
+      "label": "The person",
+      "color": "blue"
+    }
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "group": "user",
+      "label": "User token",
+      "sub": [
+        "From the sign-in"
+      ],
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "agent",
+      "group": "lab",
+      "label": "AI agent actor",
+      "sub": [
+        "client_credentials token"
+      ],
+      "x": 0,
+      "y": 320
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "RFC 8693"
+      ],
+      "x": 360,
+      "y": 160
+    },
+    {
+      "id": "mid",
+      "group": "lab",
+      "label": "Agent token",
+      "sub": [
+        "act.sub = agent"
+      ],
+      "x": 720,
+      "y": 0
+    },
+    {
+      "id": "svc",
+      "group": "lab",
+      "label": "Tool-service actor",
+      "sub": [
+        "client_credentials token"
+      ],
+      "x": 720,
+      "y": 320
+    },
+    {
+      "id": "final",
+      "group": "lab",
+      "label": "Final token",
+      "sub": [
+        "act = service, act.act = agent"
+      ],
+      "x": 1060,
+      "y": 160
+    }
+  ],
+  "edges": [
+    {
+      "source": "user",
+      "target": "token",
+      "label": "subject_token"
+    },
+    {
+      "source": "agent",
+      "target": "token",
+      "label": "actor_token"
+    },
+    {
+      "source": "token",
+      "target": "mid",
+      "label": "exchange 1"
+    },
+    {
+      "source": "mid",
+      "target": "token",
+      "label": "subject_token"
+    },
+    {
+      "source": "svc",
+      "target": "token",
+      "label": "actor_token"
+    },
+    {
+      "source": "token",
+      "target": "final",
+      "label": "exchange 2"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Hop 1",
+      "what": "User token plus agent actor become an agent token.",
+      "edges": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "title": "Hop 2",
+      "what": "The agent token plus the service actor become the final token.",
+      "edges": [
+        3,
+        4,
+        5
+      ]
+    }
+  ]
+}

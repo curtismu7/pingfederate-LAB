@@ -1,0 +1,22 @@
+{
+  "label": "Retail",
+  "cast": {
+    "company": "Copperline Outfitters",
+    "user": "Alex",
+    "agent": "Scout",
+    "service": "the order service",
+    "payee": "Copperline"
+  },
+  "cards": {
+    "signin": "{{cast.user}} signs in to {{cast.company}} in the store's own page, driven through PingFederate's API.",
+    "dcr": "{{cast.agent}}, a shopping assistant, registers with {{cast.company}} using an initial access token; without it, no registration.",
+    "rar": "{{cast.agent}} asks to pay {{cast.payee}} for one basket, and {{cast.user}} approves that amount, nothing more.",
+    "ciba": "{{cast.agent}} found a deal but needs {{cast.user}}'s yes; PingFederate asks {{cast.user}} out of band.",
+    "dpop": "{{cast.agent}}'s token only works together with {{cast.agent}}'s private key.",
+    "tokenExchange": "{{cast.user}} delegates to {{cast.agent}}, which calls {{cast.serviceWord}}: the token carries the whole chain.",
+    "userinfo": "{{cast.agent}} reads {{cast.user}}'s profile from PingFederate with {{cast.user}}'s own token.",
+    "piflow": "{{cast.company}}'s checkout renders the sign-in steps from PingFederate's JSON.",
+    "par": "{{cast.agent}} pushes the order request to PingFederate before the user sees anything.",
+    "pkce": "The code that comes back to {{cast.agent}} only works with the verifier {{cast.agent}} kept."
+  }
+}

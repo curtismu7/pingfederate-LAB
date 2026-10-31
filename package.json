@@ -1,0 +1,21 @@
+{
+  "name": "pingfederate-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "test": "npm test -w server && npm test -w web",
+    "start": "node server/src/index.js",
+    "build": "npm run build -w web",
+    "dev:web": "npm run dev -w web",
+    "doctor": "node scripts/doctor.mjs",
+    "reset": "node scripts/reset.mjs"
+  },
+  "engines": {
+    "node": ">=26"
+  }
+}

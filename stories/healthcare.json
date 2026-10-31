@@ -1,0 +1,22 @@
+{
+  "label": "Healthcare",
+  "cast": {
+    "company": "Ridgeview Clinic",
+    "user": "Sam",
+    "agent": "Triage",
+    "service": "the records service",
+    "payee": "the pharmacy"
+  },
+  "cards": {
+    "signin": "{{cast.user}} signs in to {{cast.company}}'s portal through the portal's own form; the password goes only to PingFederate.",
+    "dcr": "{{cast.agent}} enrols as a client of {{cast.company}} with an initial access token; an anonymous enrolment is refused.",
+    "rar": "{{cast.agent}} asks for one specific payment to {{cast.payee}}, described in full, and {{cast.user}} approves exactly that.",
+    "ciba": "{{cast.agent}} wants {{cast.user}}'s consent before sharing a result; the request lands on {{cast.user}}'s phone, not in the agent's window.",
+    "dpop": "{{cast.agent}} proves with its own key on every call that it is the holder of its token.",
+    "tokenExchange": "A request from {{cast.user}} passes through {{cast.agent}} to {{cast.serviceWord}}, and the token records both hops.",
+    "userinfo": "The portal confirms who {{cast.user}} is by asking PingFederate with {{cast.user}}'s token.",
+    "piflow": "The portal drives PingFederate's sign-in through an API and shows its own screens.",
+    "par": "{{cast.agent}}'s request is pushed to PingFederate up front and referred to by a one-time handle.",
+    "pkce": "A stolen authorization code cannot be redeemed without the verifier {{cast.agent}} never sent."
+  }
+}

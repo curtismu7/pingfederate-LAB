@@ -1,0 +1,14 @@
+node_modules
+.env
+.data
+dist
+*.log
+customer.config.json
+
+*.pem
+*.key
+*.crt
+.env.*
+!.env.example
+pingfederate.json
+*.jar

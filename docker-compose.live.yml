@@ -1,0 +1,28 @@
+# Live mode over https: add this file to the base one.
+#   docker compose -f docker-compose.yml -f docker-compose.live.yml up --build -d
+# or put  COMPOSE_FILE=docker-compose.yml:docker-compose.live.yml  in .env and run plain `docker compose up --build -d`.
+# It needs PFLAB_CA_FILE, PFLAB_TLS_CERT_FILE, PFLAB_TLS_KEY_FILE and PF_HOSTNAME (see .env.example). The port stays
+# published on 127.0.0.1 only: the base file owns `ports`, and this file adds none.
+services:
+  pingfederate-lab:
+    environment:
+      # The lab serves https with this certificate (it must cover 127.0.0.1, localhost and LAB_ALLOWED_HOSTS).
+      LAB_TLS_CERT: /tls/cert.pem
+      LAB_TLS_KEY: /tls/key.pem
+      # Trust the local PingFederate's certificate (mkcert); appends to Node's CAs, never replaces them.
+      NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
+    volumes:
+      # Only the lab's own settings folder (mode 700, file mode 600); nothing else from ~/.config is mounted.
+      - ${PFLAB_CONFIG_DIR:-${HOME}/.config/demo-kit/pingfederate-lab}:/config
+      - ${PFLAB_CA_FILE:?set PFLAB_CA_FILE in .env}:/certs/rootCA.pem:ro
+      - ${PFLAB_TLS_CERT_FILE:?set PFLAB_TLS_CERT_FILE in .env}:/tls/cert.pem:ro
+      - ${PFLAB_TLS_KEY_FILE:?set PFLAB_TLS_KEY_FILE in .env}:/tls/key.pem:ro
+    # PingFederate's certificate names a host that points at 127.0.0.1 on the Mac; inside the container that name
+    # has to point at the Mac instead, where PingFederate publishes its runtime port.
+    extra_hosts:
+      - "${PF_HOSTNAME:?set PF_HOSTNAME in .env}:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('https://127.0.0.1:5400/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

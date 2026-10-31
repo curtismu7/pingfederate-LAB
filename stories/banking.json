@@ -1,0 +1,22 @@
+{
+  "label": "Banking",
+  "cast": {
+    "company": "Harbor Mutual",
+    "user": "Dana",
+    "agent": "Ledger",
+    "service": "the payments service",
+    "payee": "Ridge Utilities"
+  },
+  "cards": {
+    "signin": "{{cast.user}} signs in to {{cast.company}} inside the app itself; PingFederate checks the password, the app never sends them anywhere.",
+    "dcr": "{{cast.agent}} registers itself as a new client at {{cast.company}}, but only because it holds an initial access token: without one PingFederate says no.",
+    "rar": "{{cast.agent}} asks to pay {{cast.payee}} a set amount, and that exact transfer, not a blanket permission, is what {{cast.user}} approves.",
+    "ciba": "{{cast.agent}} needs {{cast.user}}'s go-ahead while {{cast.user}} is away from the app: PingFederate asks on their own device and {{cast.agent}} waits.",
+    "dpop": "{{cast.agent}}'s token is bound to a key only {{cast.agent}} holds, so a copied token is worthless to anyone else.",
+    "tokenExchange": "{{cast.user}}'s token becomes {{cast.agent}}'s, then {{cast.serviceWord}}'s, and the final token still says who acted for whom.",
+    "userinfo": "{{cast.agent}} reads who {{cast.user}} is from PingFederate, with {{cast.user}}'s own access token.",
+    "piflow": "{{cast.company}}'s own app renders the sign-in: PingFederate answers with JSON instead of a login page.",
+    "par": "{{cast.agent}} hands its whole request to PingFederate first, so nothing in it can be changed on the way through the browser.",
+    "pkce": "Even if someone catches the code meant for {{cast.agent}}, it is useless without the secret {{cast.agent}} kept back."
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-pkce",
+  "title": "PKCE",
+  "lede": "The code only works with the verifier the lab kept.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "Redeems codes, issues tokens"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "verifier",
+      "group": "lab",
+      "label": "code_verifier",
+      "sub": [
+        "Random secret, kept in the lab"
+      ],
+      "x": 0,
+      "y": 360
+    }
+  ],
+  "edges": [
+    {
+      "source": "verifier",
+      "target": "lab",
+      "label": "S256 hash = code_challenge"
+    },
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "code_challenge"
+    },
+    {
+      "source": "authz",
+      "target": "lab",
+      "label": "code"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "code + code_verifier"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Challenge",
+      "what": "The lab sends only the hash.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Code",
+      "what": "PingFederate returns a code.",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "Verifier",
+      "what": "Only the holder of the verifier can redeem it.",
+      "edges": [
+        3
+      ]
+    }
+  ]
+}

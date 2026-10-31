@@ -1,0 +1,104 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-dpop",
+  "title": "DPoP sign-in",
+  "lede": "The token is bound to a key the lab holds.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "token",
+      "group": "pf",
+      "label": "Token endpoint",
+      "sub": [
+        "Redeems codes, issues tokens"
+      ],
+      "x": 340,
+      "y": 320
+    },
+    {
+      "id": "key",
+      "group": "lab",
+      "label": "Run key (P-256)",
+      "sub": [
+        "Private key never leaves the lab"
+      ],
+      "x": 0,
+      "y": 360
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "pi.flow sign-in"
+    },
+    {
+      "source": "key",
+      "target": "lab",
+      "label": "sign DPoP proof"
+    },
+    {
+      "source": "lab",
+      "target": "token",
+      "label": "code + DPoP proof"
+    },
+    {
+      "source": "token",
+      "target": "lab",
+      "label": "token_type DPoP, cnf.jkt"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Sign in",
+      "what": "Same pi.flow sign-in as the other cards.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "Proof",
+      "what": "The lab signs a proof with this run's key.",
+      "edges": [
+        1,
+        2
+      ]
+    },
+    {
+      "title": "Bound",
+      "what": "The token names the key's thumbprint.",
+      "edges": [
+        3
+      ]
+    }
+  ]
+}

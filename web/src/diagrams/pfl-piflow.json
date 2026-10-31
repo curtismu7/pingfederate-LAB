@@ -1,0 +1,82 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "pfl-piflow",
+  "title": "Authentication API: open and read",
+  "lede": "A flow is opened and read back; nothing is posted.",
+  "groups": {
+    "lab": {
+      "label": "This lab",
+      "color": "dark"
+    },
+    "pf": {
+      "label": "Your PingFederate",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "lab",
+      "group": "lab",
+      "label": "This lab (server)",
+      "sub": [
+        "Holds PKCE verifier, keys, tokens"
+      ],
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "authz",
+      "group": "pf",
+      "label": "Authorization endpoint",
+      "sub": [
+        "response_mode=pi.flow"
+      ],
+      "x": 340,
+      "y": 0
+    },
+    {
+      "id": "authn",
+      "group": "pf",
+      "label": "Authentication API",
+      "sub": [
+        "/pf-ws/authn/flows/{id}"
+      ],
+      "x": 680,
+      "y": 320
+    }
+  ],
+  "edges": [
+    {
+      "source": "lab",
+      "target": "authz",
+      "label": "authorize, response_mode=pi.flow"
+    },
+    {
+      "source": "authz",
+      "target": "lab",
+      "label": "flow JSON: status, actions"
+    },
+    {
+      "source": "lab",
+      "target": "authn",
+      "label": "GET the flow (X-XSRF-Header)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Open",
+      "what": "PingFederate answers with a JSON flow.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Read",
+      "what": "The lab reads it back; no credential is sent.",
+      "edges": [
+        2
+      ]
+    }
+  ]
+}

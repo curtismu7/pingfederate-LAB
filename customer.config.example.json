@@ -1,0 +1,8 @@
+{
+  "name": "Harbor Mutual Agent Lab",
+  "tagline": "How our agents get only the access they need, proven live",
+  "accent": "#0b6b6b",
+  "vertical": "banking",
+  "vocabulary": { "agent": "digital assistant", "user": "member", "service": "payments desk" },
+  "cast": { "company": "Harbor Mutual", "agent": "Ledger" }
+}

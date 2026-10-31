@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: npm ci
+      - run: npm run build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: npm ci
+      - run: npm test
+
+  doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: npm ci
+      - run: npm run doctor
+
+  forbidden-strings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Scan history and tree (counts only, the list is never printed)
+        env:
+          FORBIDDEN_STRINGS: ${{ secrets.FORBIDDEN_STRINGS }}
+        run: |
+          list="$RUNNER_TEMP/forbidden.txt"
+          printf '%s\n' "$FORBIDDEN_STRINGS" | grep -v '^$' > "$list" || true
+          test -s "$list" || { echo "FORBIDDEN_STRINGS secret is empty"; exit 1; }
+          hist=$(git log -p --all | grep -cF -f "$list" || true)
+          tree=$(git grep -l -F -f "$list" -- . || true)
+          tree_count=$(printf '%s' "$tree" | grep -c . || true)
+          echo "history hits: $hist"
+          echo "tree files with hits: $tree_count"
+          test "$hist" = "0" && test "$tree_count" = "0"
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          base=https://github.com/gitleaks/gitleaks/releases/download/v8.18.4
+          curl -sSLO "$base/gitleaks_8.18.4_linux_x64.tar.gz"
+          curl -sSLO "$base/gitleaks_8.18.4_checksums.txt"
+          grep ' gitleaks_8.18.4_linux_x64.tar.gz$' gitleaks_8.18.4_checksums.txt | sha256sum -c -
+          tar -xz -f gitleaks_8.18.4_linux_x64.tar.gz gitleaks
+          ./gitleaks version
+      - name: Scan history
+        run: ./gitleaks detect --source . --redact --no-banner
