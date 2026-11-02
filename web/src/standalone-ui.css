@@ -3,7 +3,7 @@
   Canonical copy lives in AI-DEMO-Standalone/shared/. Each app vendors an identical copy
   (check with scripts/check-ui-standard.sh). Do not edit a vendored copy; change this file.
 
-  Tokens come from the Ping palette in AI-DEMO2 demo_api_ui/src/index.css.
+  Tokens come from the Ping brand palette.
   Light is the default. Dark follows the system setting unless data-theme is set.
   Montserrat for text, IBM Plex Mono for code. Emphasis is heavier weight, never italics.
   Every unselected control has a visible border at 3:1 or more in both themes.
