@@ -79,6 +79,30 @@ export function latestTrace(results) {
   return [];
 }
 
+// The newest settled step that returned a token (or decoded access-token claims): { index, tokens: [{ label, view }] } or null.
+// A token view is what the server sends (masked or, in mock, whole; header and claims decoded), so nothing is decoded here.
+export function lastTokenStep(results) {
+  for (let i = results.length - 1; i >= 0; i -= 1) {
+    const r = results[i];
+    if (!r || r.skipped || r.pending || !r.ok) continue;
+    const d = r.data || {};
+    const tokens = [['Access token', d.accessToken], ['ID token', d.idToken], ['Token', d.token]]
+      .filter(([, view]) => view && typeof view === 'object')
+      .map(([label, view]) => ({ label, view }));
+    if (!tokens.length && d.claims && typeof d.claims === 'object' && !Array.isArray(d.claims)) tokens.push({ label: 'Access token (claims only)', view: { claims: d.claims, mock: d.mode === 'mock' } });
+    if (tokens.length) return { index: i, tokens };
+  }
+  return null;
+}
+
+// scopes, aud, sub and exp of decoded claims, for the Token card. An opaque token has no claims (null).
+export function tokenFacts(claims) {
+  if (!claims || typeof claims !== 'object') return null;
+  const list = (v) => (Array.isArray(v) ? v.map(String) : typeof v === 'string' && v ? v.split(' ') : []);
+  const exp = Number.isFinite(claims.exp) ? new Date(claims.exp * 1000) : null;
+  return { scopes: list(claims.scope ?? claims.scp), aud: list(claims.aud), sub: typeof claims.sub === 'string' ? claims.sub : null, exp: exp && !Number.isNaN(exp.getTime()) ? exp.toISOString() : null };
+}
+
 // Plain names for what a trace step asked PingFederate for.
 const PHRASES = {
   discovery: 'the discovery request',

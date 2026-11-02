@@ -3,7 +3,9 @@ import DiagramView from '../DiagramView.jsx';
 import Steps from './Steps.jsx';
 import Credentials from './Credentials.jsx';
 import CibaApproval from './CibaApproval.jsx';
-import { TraceList } from '../Proof.jsx';
+import { TraceList, TokenCard } from '../Proof.jsx';
+import { EXPLAIN, FLOW_INFO } from '../content.js';
+import { api } from '../api.js';
 import { FLOWS, FLOW_IDS, latestTrace, proofPoints, traceToDiagram } from '../flows.js';
 import { useFlowRun } from '../useFlowRun.js';
 
@@ -11,8 +13,30 @@ import { useFlowRun } from '../useFlowRun.js';
 // Flows that take a user: CIBA asks that user to approve; the sign-in flows send it as login_hint (RAR as user_id).
 const USER_FLOWS = new Set(['ciba', 'signin', 'pkce', 'par', 'dpop', 'rar']);
 
+const TABS = [['activity', 'Activity'], ['token', 'Token']];
+
+const ID_JAG_REPO = 'https://github.com/ping-sandbox/id-jag-standalone-LAB';
+
+// The top of every flow: the card's explainer, the specification, what it solves and why it matters for AI agents.
+function FlowExplainer({ flowId }) {
+  const info = FLOW_INFO[flowId];
+  return (
+    <section className="pg-explain" aria-label={`About ${FLOWS[flowId].title}`}>
+      <p className="explain">{EXPLAIN[flowId]}</p>
+      {info && (
+        <dl className="pg-explain__facts">
+          <div><dt>Specification</dt><dd><a href={info.spec.href} target="_blank" rel="noreferrer noopener">{info.spec.label}</a></dd></div>
+          <div><dt>What it solves</dt><dd>{info.solves}</dd></div>
+          <div><dt>Why it matters for AI agents</dt><dd>{info.matters}</dd></div>
+        </dl>
+      )}
+    </section>
+  );
+}
+
 function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
   const [loginHint, setLoginHint] = useState('');
+  const [tab, setTab] = useState('activity');
   const run = useFlowRun(flowId, { onSettled: onChanged });
   const settled = useMemo(() => run.results.filter((r) => r && !r.skipped && !r.pending), [run.results]);
   const trace = useMemo(() => latestTrace(settled), [settled]);
@@ -36,8 +60,25 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
     });
   }, [run.results]);
 
+  // DCR: a half-finished run leaves a client on the mock; Clear removes it there (the lab never deletes on a real PingFederate on its own).
+  const clear = async () => {
+    run.clear();
+    if (flowId === 'dcr') { await api.discardDcr(); onChanged?.(); }
+  };
+
+  // ARIA tabs: Left/Right wrap, Home/End jump; only the selected tab is in the tab order.
+  const moveTab = (e, id) => {
+    const at = TABS.findIndex(([t]) => t === id);
+    const to = { ArrowRight: (at + 1) % TABS.length, ArrowLeft: (at + TABS.length - 1) % TABS.length, Home: 0, End: TABS.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    setTab(TABS[to][0]);
+    document.getElementById(`pg-${flowId}-tab-${TABS[to][0]}`)?.focus();
+  };
+
   return (
     <div className="pg-flow">
+      <FlowExplainer flowId={flowId} />
       {USER_FLOWS.has(flowId) && (
         <label className="pg-user" htmlFor={`pg-${flowId}-user`}>User (login_hint)
           <input id={`pg-${flowId}-user`} type="text" value={loginHint} maxLength={256} onChange={(e) => setLoginHint(e.target.value)}
@@ -46,23 +87,34 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
       )}
       <div className="run-actions">
         <button type="button" className="primary" onClick={() => run.runAll(options)} disabled={run.busy || !ready || needsSignIn}>Run all</button>
-        <button type="button" onClick={run.clear} disabled={run.busy}>Clear</button>
+        <button type="button" onClick={clear} disabled={run.busy}>Clear</button>
         {!ready && <span className="hint">Not ready: see the card on the shelf for what is missing.</span>}
         {ready && needsSignIn && <span className="hint">Type the user who should approve, or <a href="#/run/signin">sign in</a> and leave it empty to use yourself.</span>}
       </div>
       <Steps flow={run.flow} results={run.results} waiting={run.waiting} onExecute={(i) => run.runOne(i, options)} busy={run.busy || !ready || needsSignIn} />
       {cibaPending && run.busy && <CibaApproval key={cibaPending.expiresAt} pending={cibaPending} />}
-      {run.waiting >= 0 && <Credentials busy={run.busy} refused={run.results[run.waiting]?.data?.refused} onSubmit={(c) => run.submitCredentials(c, { single: true })} idPrefix={`pg-${flowId}`} initialUsername={run.results[run.waiting - 1]?.data?.loginHint || ''} mock={run.results[run.waiting - 1]?.data?.mode === 'mock'} />}
-      {points.length > 0 && <ul className="points" aria-live="polite">{points.map((p, i) => <li key={`${i}-${p.text}`} className={`pt pt-${p.tone}`}><span className="pt-tag">{p.tag || p.tone}</span> {p.text}</li>)}</ul>}
-      {diagram && <DiagramView key={`live-${trace.length}`} diagram={diagram} heading="h4" />}
-      <h4>Request and response per step</h4>
-      {run.flow.steps.map((step, i) => (run.results[i] && !run.results[i].skipped && !run.results[i].pending ? (
-        <section key={step.id} className="pg-step" aria-label={`Step ${i + 1} raw`}>
-          <h5>{i + 1}. {step.label} <span className="mono hint">POST {step.path} : {run.results[i].status}</span></h5>
-          {!run.results[i].ok && <p className="pt pt-error" role="alert"><code>{run.results[i].data?.error}</code>{run.results[i].data?.message ? `: ${run.results[i].data.message}` : ''}</p>}
-          <TraceList trace={perStep[i] || []} />
-        </section>
-      ) : null))}
+      {run.waiting >= 0 && <Credentials busy={run.busy} refused={run.results[run.waiting]?.data?.refused} onSubmit={(c) => run.submitCredentials(c, { single: true })} idPrefix={`pg-${flowId}-cred`} initialUsername={run.results[run.waiting - 1]?.data?.loginHint || ''} mock={run.results[run.waiting - 1]?.data?.mode === 'mock'} />}
+      <div className="pg-tabs" role="tablist" aria-label="Activity and token">
+        {TABS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" id={`pg-${flowId}-tab-${id}`} aria-selected={tab === id} aria-controls={`pg-${flowId}-panel-${id}`}
+            tabIndex={tab === id ? 0 : -1} onClick={() => setTab(id)} onKeyDown={(e) => moveTab(e, id)}>{label}</button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`pg-${flowId}-panel-token`} aria-labelledby={`pg-${flowId}-tab-token`} hidden={tab !== 'token'}>
+        <TokenCard results={run.results} steps={run.flow.steps} />
+      </div>
+      <div role="tabpanel" id={`pg-${flowId}-panel-activity`} aria-labelledby={`pg-${flowId}-tab-activity`} hidden={tab !== 'activity'}>
+        {points.length > 0 && <ul className="points" aria-live="polite">{points.map((p, i) => <li key={`${i}-${p.text}`} className={`pt pt-${p.tone}`}><span className="pt-tag">{p.tag || p.tone}</span> {p.text}</li>)}</ul>}
+        {diagram && <DiagramView key={`live-${trace.length}`} diagram={diagram} heading="h4" />}
+        <h4>Request and response per step</h4>
+        {run.flow.steps.map((step, i) => (run.results[i] && !run.results[i].skipped && !run.results[i].pending ? (
+          <section key={step.id} className="pg-step" aria-label={`Step ${i + 1} raw`}>
+            <h5>{i + 1}. {step.label} <span className="mono hint">POST {step.path} : {run.results[i].status}</span></h5>
+            {!run.results[i].ok && <p className="pt pt-error" role="alert"><code>{run.results[i].data?.error}</code>{run.results[i].data?.message ? `: ${run.results[i].data.message}` : ''}</p>}
+            <TraceList trace={perStep[i] || []} />
+          </section>
+        ) : null))}
+      </div>
     </div>
   );
 }
@@ -75,6 +127,7 @@ export default function Playground({ cards, onChanged, signedInAs = null }) {
       <p className="crumbs"><a href="#/">Shelf</a> / Playground</p>
       <h2 id="pg-title">PingFederate Protocol Playground</h2>
       <p className="explain">Every flow, step by step. Execute one step at a time or run them all; each step calls the same lab endpoint as its card, and the lab calls your PingFederate.</p>
+      <p className="hint">ID-JAG is not in this lab: it lives in <a href={ID_JAG_REPO} target="_blank" rel="noreferrer noopener">id-jag-standalone-LAB</a> ({ID_JAG_REPO}).</p>
       <div className="pg">
         <nav className="pg-nav" aria-label="Flows">
           {FLOW_IDS.map((id) => (

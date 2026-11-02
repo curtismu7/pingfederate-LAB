@@ -9,6 +9,8 @@ Mock / Live toggle on every page (owner, 2026-10-31). Mock = `server/src/mockpf.
 `server/src/netguard.js` (no socket, real fetch never called); live = only the configured issuer origin, through
 `server/src/outbound.js`. No other module may call fetch. Mock sign-in needs `ALLOW_MOCK_SIGNIN=1`, and is refused behind a proxy
 and on a non-loopback bind unless `LAB_PUBLISH=loopback` (rule 11); `NODE_ENV=production` is not a guard (the Docker image sets it).
+Plain `npm start` (index.js passes `hostRun`) sets it itself only on a loopback bind with `ALLOW_MOCK_SIGNIN` and `LAB_PUBLISH` unset and no issuer saved (`hostRunAllowsMockSignIn`, read per request); never widen that.
+`GET /api/mode` sends the mock user and password only while mock sign-in is allowed.
 Mock demo user: alice / correct-horse-battery (mock only). Tests use the same mock via `server/test/fakepf.js`.
 
 ## Run and test
@@ -16,12 +18,14 @@ Mock demo user: alice / correct-horse-battery (mock only). Tests use the same mo
 - `npm run doctor` (one line per check, exit 1 on failure); `npm run reset [workspace]` clears one workspace's runs on the running lab.
 - Workspaces (rule 13): `X-Lab-Workspace` header (default `default`); sessions are keyed by cookie id + workspace (`server/src/session.js`); the page keeps the choice in localStorage `pflab-workspace`.
 
-- Docker: `docker compose up --build -d` -> http://127.0.0.1:5400 (mock, nothing to set up). Live over https adds `docker-compose.live.yml` (`COMPOSE_FILE=docker-compose.yml:docker-compose.live.yml` in a local `.env`) -> https://127.0.0.1:5400 and the `LAB_ALLOWED_HOSTS` names.
-- `npm install`, `npm run build`, `npm start` (127.0.0.1:5400), `npm test` (server: `node --test test/*.test.js`, a glob, never a directory; web: vitest).
+- Docker: `docker compose up --build -d` -> http://127.0.0.1:5400 (mock, nothing to set up). Other port: `HOST_PORT=5401 docker compose up -d` (one number on both sides of the mapping and as `PORT`; the Host check answers only the published port). Live over https adds `docker-compose.live.yml` (`COMPOSE_FILE=docker-compose.yml:docker-compose.live.yml` in a local `.env`) -> https://127.0.0.1:5400 and the `LAB_ALLOWED_HOSTS` names.
+- `npm install`, `npm run build`, `npm start` (127.0.0.1:5400), `npm test` (server: `node --test test/*.test.js`, a glob, never a directory; web: vitest; both workspaces run even if one fails), `npm run e2e` (Playwright, all 11 Playground flows in mock, light/dark at 1280 and 375, zero off-localhost requests; needs `npm run build`).
+- `server/test/demo-kit-conformance.mjs` is a copy of demo-kit-base's `scripts/conformance.mjs` (cac827a) so hosted CI can run the gate (`--new`). It sits under `test/` because the gate scans every other source file, including itself (its rule text says "mermaid"). Refresh it from demo-kit-base; do not edit it here.
 - Node 26 only (owner, 2026-10-31): Dockerfile, CI and `engines` say 26.
 
 ## Rules that bite
 
+- Mock DCR: `dcr.discard` (the Playground's Clear on DCR, `/api/reset`, `npm run reset`) deletes a leftover client from the in-process mock only; on a real PingFederate the lab never deletes on its own.
 - Rule 4: live tokens are shown masked with decoded claims; mock tokens are fake and shown whole, labelled mock (`withTokenMode` in `server/src/trace.js`, set per request from the mode). A test proves a live token never appears whole.
 - The web UI only calls the lab's own `/api` (CSP `default-src 'self'`); never navigate to PingFederate (pi.flow only).
 - Static diagrams are diagram-studio/1 JSON in `web/src/diagrams/`; the live sequence is built from the trace in
