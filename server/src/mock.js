@@ -89,7 +89,11 @@ const FORWARDED = ['forwarded', 'x-forwarded-for', 'x-forwarded-host', 'x-forwar
 // Returns null when allowed, or the reason it is refused.
 export function mockSignInRefusal({ env, bind, headers }) {
   // NODE_ENV is not a guard: the Docker image runs with NODE_ENV=production and mock sign-in is allowed there on purpose.
-  if (env.ALLOW_MOCK_SIGNIN !== '1') return 'Mock sign-in is off. Start the lab with ALLOW_MOCK_SIGNIN=1 npm start (plain npm start allows it only when no PingFederate is saved in Settings).';
+  if (env.ALLOW_MOCK_SIGNIN !== '1') {
+    return env.LAB_PUBLISH === 'loopback'
+      ? 'Mock sign-in is off. Set ALLOW_MOCK_SIGNIN to "1" under environment in the compose file, then run docker compose up -d.'
+      : 'Mock sign-in is off. Start the lab with ALLOW_MOCK_SIGNIN=1 npm start (plain npm start allows it only when no PingFederate is saved in Settings).';
+  }
   if (FORWARDED.some((h) => headers[h] !== undefined)) return 'Mock sign-in is refused behind a proxy.';
   if (!LOOPBACK_BIND.has(bind) && env.LAB_PUBLISH !== 'loopback') return 'Mock sign-in is refused on a non-loopback address.';
   return null;
