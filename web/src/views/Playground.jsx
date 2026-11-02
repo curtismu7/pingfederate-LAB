@@ -13,6 +13,8 @@ import { useFlowRun } from '../useFlowRun.js';
 // Flows that take a user: CIBA asks that user to approve; the sign-in flows send it as login_hint (RAR as user_id).
 const USER_FLOWS = new Set(['ciba', 'signin', 'pkce', 'par', 'dpop', 'rar']);
 
+const TABS = [['activity', 'Activity'], ['token', 'Token']];
+
 const ID_JAG_REPO = 'https://github.com/ping-sandbox/id-jag-standalone-LAB';
 
 // The top of every flow: the card's explainer, the specification, what it solves and why it matters for AI agents.
@@ -64,6 +66,16 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
     if (flowId === 'dcr') { await api.discardDcr(); onChanged?.(); }
   };
 
+  // ARIA tabs: Left/Right wrap, Home/End jump; only the selected tab is in the tab order.
+  const moveTab = (e, id) => {
+    const at = TABS.findIndex(([t]) => t === id);
+    const to = { ArrowRight: (at + 1) % TABS.length, ArrowLeft: (at + TABS.length - 1) % TABS.length, Home: 0, End: TABS.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    setTab(TABS[to][0]);
+    document.getElementById(`pg-${flowId}-tab-${TABS[to][0]}`)?.focus();
+  };
+
   return (
     <div className="pg-flow">
       <FlowExplainer flowId={flowId} />
@@ -83,8 +95,9 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
       {cibaPending && run.busy && <CibaApproval key={cibaPending.expiresAt} pending={cibaPending} />}
       {run.waiting >= 0 && <Credentials busy={run.busy} refused={run.results[run.waiting]?.data?.refused} onSubmit={(c) => run.submitCredentials(c, { single: true })} idPrefix={`pg-${flowId}-cred`} initialUsername={run.results[run.waiting - 1]?.data?.loginHint || ''} mock={run.results[run.waiting - 1]?.data?.mode === 'mock'} />}
       <div className="pg-tabs" role="tablist" aria-label="Activity and token">
-        {[['activity', 'Activity'], ['token', 'Token']].map(([id, label]) => (
-          <button key={id} type="button" role="tab" id={`pg-${flowId}-tab-${id}`} aria-selected={tab === id} aria-controls={`pg-${flowId}-panel-${id}`} onClick={() => setTab(id)}>{label}</button>
+        {TABS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" id={`pg-${flowId}-tab-${id}`} aria-selected={tab === id} aria-controls={`pg-${flowId}-panel-${id}`}
+            tabIndex={tab === id ? 0 : -1} onClick={() => setTab(id)} onKeyDown={(e) => moveTab(e, id)}>{label}</button>
         ))}
       </div>
       <div role="tabpanel" id={`pg-${flowId}-panel-token`} aria-labelledby={`pg-${flowId}-tab-token`} hidden={tab !== 'token'}>

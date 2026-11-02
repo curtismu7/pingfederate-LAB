@@ -58,7 +58,7 @@ check('mock sign-in on npm start', () => {
   const settings = createSettings({});
   const hasTenant = Boolean(settings.value('pf', 'issuer'));
   if (process.env.ALLOW_MOCK_SIGNIN === '1') return 'on (ALLOW_MOCK_SIGNIN=1)';
-  if (hostRunAllowsMockSignIn({ env: process.env, bind: '127.0.0.1', hasTenant })) return 'on (loopback, no PingFederate saved in Settings)';
+  if (hostRunAllowsMockSignIn({ env: process.env, bind: process.env.LAB_BIND === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1', hasTenant })) return 'on (loopback, no PingFederate saved in Settings)';
   return `off${hasTenant ? ' (a PingFederate is saved in Settings)' : ''}: to use the mock, start with ALLOW_MOCK_SIGNIN=1 npm start`;
 });
 

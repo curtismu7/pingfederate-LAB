@@ -168,6 +168,9 @@ test('rule 11: mock sign-in needs ALLOW_MOCK_SIGNIN=1, no proxy headers, and a l
   const docker = await mockLab({ bind: '0.0.0.0', env: { ...MOCK_ENV, LAB_PUBLISH: 'loopback' } });
   try { assert.equal((await docker.lab.call('POST', '/api/signin/start')).status, 200); } finally { await docker.lab.close(); }
   assert.match(mockSignInRefusal({ env: { NODE_ENV: 'production' }, bind: '127.0.0.1', headers: {} }), /Mock sign-in is off\. Start the lab with ALLOW_MOCK_SIGNIN=1 npm start/);
+  // In Docker the switch is the compose file, so the message must not tell the owner to run npm start.
+  assert.match(mockSignInRefusal({ env: { LAB_PUBLISH: 'loopback' }, bind: '0.0.0.0', headers: {} }), /compose file.*docker compose up -d/);
+  assert.doesNotMatch(mockSignInRefusal({ env: { LAB_PUBLISH: 'loopback' }, bind: '0.0.0.0', headers: {} }), /npm start/);
   assert.equal(mockSignInRefusal({ env: { NODE_ENV: 'production', ALLOW_MOCK_SIGNIN: '1' }, bind: '127.0.0.1', headers: {} }), null);
   assert.match(mockSignInRefusal({ env: MOCK_ENV, bind: '127.0.0.1', headers: { forwarded: 'for=x' } }), /proxy/);
 });

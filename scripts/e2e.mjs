@@ -1,6 +1,6 @@
 // npm run e2e: drives the built lab in a real browser (Playwright, Chromium), in mock mode, on a throwaway settings file.
 // It starts the server the way a plain `npm start` does (no ALLOW_MOCK_SIGNIN), runs all 11 Playground flows to completion,
-// then checks the explainer and the Token tab in light and dark at 1280 and 375 wide. Every request must stay on loopback.
+// each in a fresh browser context (so every sign-in dialog runs), then checks the Activity/Token tab keys, the explainer and the Token tab in light and dark at 1280 and 375 wide. Every request must stay on loopback.
 // Needs `npm run build` first and a Chromium (`npx playwright install chromium`). E2E_PORT (5400-5449, default 5449) picks
 // the port; E2E_SHOTS=<folder> saves a screenshot per theme and width. Exit 1 on the first failed check.
 import { spawn } from 'node:child_process';
@@ -41,17 +41,23 @@ async function main() {
   const password = mode.mockSignIn.password;
 
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
   const requests = [];
-  await context.route('**/*', (route) => {
-    const url = route.request().url();
-    requests.push(url);
-    return /^(http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/|data:|blob:)/.test(url) ? route.continue() : route.abort();
-  });
-  const page = await context.newPage();
   const problems = [];
-  page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
-  page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
+  let context;
+  let page;
+  // A fresh browser context (no cookies), so a flow's sign-in dialog runs for every flow, not just the first one.
+  const freshPage = async (scheme = 'light', size = { width: 1280, height: 900 }) => {
+    await context?.close();
+    context = await browser.newContext({ viewport: size, colorScheme: scheme });
+    await context.route('**/*', (route) => {
+      const url = route.request().url();
+      requests.push(url);
+      return /^(http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/|data:|blob:)/.test(url) ? route.continue() : route.abort();
+    });
+    page = await context.newPage();
+    page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
+    page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
+  };
 
   const openFlow = async (title) => {
     await page.goto(`${base}/#/playground`);
@@ -66,9 +72,11 @@ async function main() {
     await panel.getByRole('button', { name: 'Run all' }).click();
     const runAll = panel.getByRole('button', { name: 'Run all' });
     const deadline = Date.now() + 45000;
+    let dialogs = 0;
     while (Date.now() < deadline) {
       const dialog = page.getByRole('dialog');
       if (await dialog.count()) {
+        dialogs += 1;
         await dialog.getByLabel('Username').fill(user);
         await dialog.getByLabel('Password').fill(password);
         await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -78,20 +86,24 @@ async function main() {
       if (await runAll.isEnabled() && !(await page.getByRole('dialog').count())) break;
       await page.waitForTimeout(150);
     }
-    return flowId;
+    return dialogs;
   };
 
   const flowTitles = [['signin', 'Sign in (pi.flow)'], ['dcr', 'Dynamic client registration'], ['rar', 'RAR via PAR'], ['ciba', 'CIBA'], ['dpop', 'DPoP sign-in'],
     ['tokenExchange', 'Token exchange'], ['userinfo', 'Userinfo'], ['piflow', 'Authentication API'], ['par', 'PAR'], ['pkce', 'PKCE'], ['discovery', 'Discovery check']];
   for (const [id, title] of flowTitles) {
+    await freshPage();
+    // These two read the session the sign-in flow leaves behind, so each starts by signing in (in its own fresh browser).
+    if (id === 'tokenExchange' || id === 'userinfo') { await openFlow('Sign in (pi.flow)'); await runToEnd('signin'); }
     await openFlow(title);
     const about = page.getByRole('region', { name: /^About / });
     const explained = await about.getByText('Why it matters for AI agents').count() === 1 && await about.getByRole('link').count() === 1;
-    await runToEnd(id);
+    const dialogs = await runToEnd(id);
     const chips = await page.locator('.pg-flow .steps .chip').evaluateAll((els) => els.map((e) => e.textContent));
     const errors = await page.locator('.pg-flow .step-err, .pg-flow .pt-error, .pg-flow .pt-refused').count();
     const done = chips.filter((c) => c === 'done').length;
     check(`flow ${id} runs to completion in mock`, errors === 0 && done >= 1 && chips.every((c) => c === 'done' || c === 'not needed'), `steps: ${chips.join(', ')}`);
+    check(`flow ${id} ran its sign-in step in a fresh browser (no step skipped as 'not needed')`, !chips.includes('not needed'), `${dialogs} sign-in dialog${dialogs === 1 ? '' : 's'}`);
     check(`flow ${id} shows the explainer with a spec link`, explained);
   }
 
@@ -99,8 +111,7 @@ async function main() {
   const viewports = [['1280', { width: 1280, height: 900 }], ['375', { width: 375, height: 800 }]];
   for (const scheme of ['light', 'dark']) {
     for (const [name, size] of viewports) {
-      await page.setViewportSize(size);
-      await page.emulateMedia({ colorScheme: scheme });
+      await freshPage(scheme, size);
       await openFlow('Sign in (pi.flow)');
       await runToEnd('signin');
       await page.getByRole('tab', { name: 'Token' }).click();
@@ -112,6 +123,22 @@ async function main() {
       if (shots) await page.screenshot({ path: path.join(shots, `playground-token-${scheme}-${name}.png`), fullPage: false });
     }
   }
+
+  // The Activity/Token tabs follow the ARIA pattern: roving tabindex, Left/Right wrap, Home/End.
+  const tabs = page.getByRole('tablist', { name: 'Activity and token' });
+  const selected = async () => tabs.getByRole('tab', { selected: true }).textContent();
+  await tabs.getByRole('tab', { name: 'Activity' }).click();
+  const tabindexes = await tabs.getByRole('tab').evaluateAll((els) => els.map((e) => e.tabIndex));
+  await page.keyboard.press('ArrowRight');
+  const afterRight = [await selected(), await page.evaluate(() => document.activeElement?.textContent)];
+  await page.keyboard.press('ArrowRight');
+  const afterWrap = await selected();
+  await page.keyboard.press('End');
+  const afterEnd = await selected();
+  await page.keyboard.press('Home');
+  const afterHome = await selected();
+  check('Activity/Token tabs: roving tabindex and arrow-key navigation', tabindexes.join() === '0,-1' && afterRight.join() === 'Token,Token' && afterWrap === 'Activity' && afterEnd === 'Token' && afterHome === 'Activity',
+    `tabindex ${tabindexes}, right ${afterRight}, wrap ${afterWrap}, end ${afterEnd}, home ${afterHome}`);
 
   const off = requests.filter((u) => !/^(http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/|data:|blob:)/.test(u));
   check('zero requests left localhost', off.length === 0, `${requests.length} requests, ${off.length} off-localhost`);
