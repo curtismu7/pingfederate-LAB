@@ -149,7 +149,8 @@ test('customer.config warnings are logged at startup and returned for the Settin
   child.stdout.on('data', (d) => { out += d; });
   child.stderr.on('data', (d) => { out += d; });
   try {
-    for (let i = 0; i < 50 && !out.includes('PingFederate LAB on'); i += 1) await new Promise((r) => setTimeout(r, 100));
+    // A cold CI runner can take a while to start Node and load the modules: poll up to 30 s instead of a fixed wait.
+    for (let i = 0; i < 300 && !out.includes('PingFederate LAB on'); i += 1) await new Promise((r) => setTimeout(r, 100));
     assert.match(out, /customer\.config: accent: is in the purple range/);
     const config = await (await fetch('http://127.0.0.1:5441/api/config')).json();
     assert.ok(config.customer.warnings.some((w) => w.startsWith('accent')));

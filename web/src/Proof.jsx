@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import DiagramView from './DiagramView.jsx';
-import { latestTrace, proofPoints, traceToDiagram, endpointName, EXPECTED_REFUSALS } from './flows.js';
+import { latestTrace, proofPoints, traceToDiagram, endpointName, lastTokenStep, tokenFacts, EXPECTED_REFUSALS } from './flows.js';
 
 const json = (value) => JSON.stringify(value, null, 2);
 
@@ -12,9 +12,42 @@ export function TokenView({ label, token }) {
       <h4>{label}{token.mock && <span className="tag-mock" title="Issued by the lab's mock PingFederate">mock</span>}</h4>
       {token.raw
         ? <p className="mono token-raw"><span className="tag">raw</span> {token.value} <span className="hint">({token.length} characters, {token.kind}; fake, issued by the mock)</span></p>
-        : <p className="mono"><span className="tag">masked</span> {token.masked} <span className="hint">({token.length} characters, {token.kind})</span></p>}
+        : token.masked && <p className="mono"><span className="tag">masked</span> {token.masked} <span className="hint">({token.length} characters, {token.kind})</span></p>}
       {token.header && <><h5>Header</h5><pre>{json(token.header)}</pre></>}
       {token.claims && <><h5>Claims</h5><pre>{json(token.claims)}</pre></>}
+    </div>
+  );
+}
+
+// The decoded-claims card: scopes, audience, subject and expiry of the newest token a settled step returned, then the
+// full token view (value as the server shows it, header, claims). `steps` are the flow's steps, to name where it came from.
+export function TokenCard({ results, steps }) {
+  const found = useMemo(() => lastTokenStep(results), [results]);
+  if (!found) return <p className="hint" role="status">No token yet. A step that returns a token (or its decoded claims) shows it here.</p>;
+  const step = steps?.[found.index];
+  return (
+    <div className="token-card">
+      <p className="hint">From step {found.index + 1}{step ? `: ${step.label}` : ''}.</p>
+      <div className="tokens">
+        {found.tokens.map(({ label, view }) => {
+          const facts = tokenFacts(view.claims);
+          return (
+            <div key={label}>
+              {facts
+                ? (
+                  <dl className="token-facts" aria-label={`${label}: scopes, audience, subject, expiry`}>
+                    <div><dt>Scopes</dt><dd className="mono">{facts.scopes.join(' ') || 'none in the token'}</dd></div>
+                    <div><dt>aud</dt><dd className="mono">{facts.aud.join(', ') || 'none in the token'}</dd></div>
+                    <div><dt>sub</dt><dd className="mono">{facts.sub || 'none in the token'}</dd></div>
+                    <div><dt>exp</dt><dd className="mono">{facts.exp || 'none in the token'}</dd></div>
+                  </dl>
+                )
+                : <p className="hint">{label} is opaque: there are no claims to decode.</p>}
+              <TokenView label={label} token={view} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

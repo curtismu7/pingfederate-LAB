@@ -112,6 +112,7 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
 .pt-tag { font-family: var(--font-mono); font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-right: 6px; }
 .tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 12px; }
 .token { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px 10px; min-width: 0; }
+.token .mono { overflow-wrap: anywhere; } /* a whole mock token is one long word */
 .tag { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; }
 .tag-mock { margin-left: 6px; font-family: var(--font-mono); font-weight: 700; font-size: 0.72em; letter-spacing: 0.08em; color: var(--on-accent); background: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px; }
 .trace-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
@@ -178,6 +179,20 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
 .pg-step { border-top: 1px dashed var(--border); padding-top: 4px; }
 .pg-user { display: grid; gap: 4px; font-weight: 600; max-width: 360px; margin: 4px 0 0; }
 
+/* Playground: the explainer on top of each flow, and the Activity / Token tabs. */
+.pg-explain { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 14px 10px; margin: 8px 0 12px; }
+.pg-explain .explain { max-width: 80ch; }
+.pg-explain__facts { display: grid; gap: 6px; margin: 6px 0 0; max-width: 90ch; }
+.pg-explain__facts > div { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr); gap: 12px; border-left: 3px solid var(--accent); padding-left: 10px; }
+.pg-explain__facts dt { font-weight: 700; }
+.pg-explain__facts dd { margin: 0; overflow-wrap: anywhere; }
+.pg-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 6px; }
+.token-card { min-width: 0; }
+.token-facts { display: grid; gap: 4px; margin: 8px 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.token-facts > div { display: grid; grid-template-columns: minmax(0, 90px) minmax(0, 1fr); gap: 12px; }
+.token-facts dt { font-weight: 700; }
+.token-facts dd { margin: 0; overflow-wrap: anywhere; }
+
 /* pi.flow explainer. */
 .pfg { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 16px 16px; margin: 16px 0; }
 .pfg h4 { margin: 18px 0 6px; }
@@ -227,6 +242,7 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
   .set-row .check { grid-column: 1; }
 }
 @media (max-width: 600px) {
+  .pg-explain__facts > div { grid-template-columns: 1fr; gap: 0; }
   .step { grid-template-columns: 28px 1fr; }
   .step .chip, .step button { grid-column: 2; justify-self: start; }
   .dg-canvas { height: 340px; }

@@ -1,15 +1,17 @@
 # OrbStack:  docker compose up --build -d   ->  http://127.0.0.1:5400   (mock mode; nothing else to set up)
 # For your own PingFederate over https see docker-compose.live.yml (a second file you add with -f, or COMPOSE_FILE in .env).
 # Do not change the 127.0.0.1 below: the lab has no sign-in of its own (and allows mock sign-in), so it must stay on loopback.
+# Another port (5400-5449): HOST_PORT=5401 docker compose up -d. One number, used on both sides of the mapping and as the
+# lab's PORT, because the lab answers only the Host it is published as (127.0.0.1:<HOST_PORT>). Changing just one side gets 403 host_not_allowed.
 name: pingfederate-lab
 
 services:
   pingfederate-lab:
     build: .
     ports:
-      - "127.0.0.1:5400:5400"
+      - "127.0.0.1:${HOST_PORT:-5400}:${HOST_PORT:-5400}"
     environment:
-      PORT: "5400"
+      PORT: "${HOST_PORT:-5400}"
       LAB_BIND: 0.0.0.0
       # Mock sign-in (rule 11): allowed here because the port above is published on the Mac's 127.0.0.1 only
       # (LAB_PUBLISH says so; a test pins both). Remove ALLOW_MOCK_SIGNIN to turn mock sign-in off.
@@ -27,7 +29,7 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5400/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||5400)+'/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3

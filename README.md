@@ -3,8 +3,10 @@
 One shelf with a card for each PingFederate feature behind AI agents. Every card shows each request and response raw, on a built-in mock PingFederate (offline) or on your own PingFederate.
 
 Tier: Demo
-Repo: https://github.com/ping-sandbox/pingfederate-LAB (planned; not created yet)
-Catalog: none. No catalog row matches the whole lab (A11 covers only pi.flow sign-in), so the owner assigns one. The Learning Hub pack (`content-pack.json`) is complete except `demo.catalog`; the hub refuses it until that is set.
+Repo: https://github.com/ping-sandbox/pingfederate-LAB
+Catalog: A28 (accepted by the owner, 2026-10-31; set in `docs/shelf-entry.json` and `content-pack.json`).
+
+ID-JAG is not in this lab. It lives in id-jag-standalone-LAB (https://github.com/ping-sandbox/id-jag-standalone-LAB); the Playground says so too.
 
 ## What is simulated
 
@@ -28,6 +30,16 @@ npm start
 
 Open http://127.0.0.1:5400. With no settings file, the lab starts in mock mode and every card works: sign in (the dialog shows the demo user), run the cards, open the Playground. Choose a workspace name in the header if more than one person shares the laptop.
 
+Mock sign-in is on by itself in this plain start, because the lab is bound to 127.0.0.1 and no PingFederate is saved in Settings. Once you save a PingFederate, or if you start it any other way, mock sign-in is off and the flows stop at the sign-in step with the message to use; then start with the flag:
+
+```sh
+ALLOW_MOCK_SIGNIN=1 npm start
+```
+
+`npm run doctor` prints whether plain `npm start` allows mock sign-in on this machine.
+
+The Playground opens each of its 11 flows with a short explainer (the specification, what the feature solves, why it matters for AI agents). Its Token tab shows the scopes, aud, sub and exp of the newest token a step returned, above the full token view.
+
 For live mode, open Settings and fill in your PingFederate (below), then switch the header toggle to Live.
 
 ## Settings file
@@ -46,7 +58,7 @@ One file, mode 600: `~/.config/demo-kit/pingfederate-lab/pingfederate.json` (`PF
 | `links` | `cimdLabUrl`, `idJagUrl` (optional; link cards to the sibling apps) |
 | `mode` | `mock` or `live`, saved by the header toggle |
 
-Environment variables (all optional): `PORT`, `LAB_ALLOWED_HOSTS`, `LAB_TLS_CERT`, `LAB_TLS_KEY`, `ALLOW_MOCK_SIGNIN`, `PFLAB_SETTINGS_FILE`, `CUSTOMER_CONFIG`.
+Environment variables (all optional): `PORT`, `LAB_ALLOWED_HOSTS`, `LAB_TLS_CERT`, `LAB_TLS_KEY`, `ALLOW_MOCK_SIGNIN`, `PFLAB_SETTINGS_FILE`, `CUSTOMER_CONFIG`, and `HOST_PORT` (Docker form only: the port to publish).
 
 **PingFederate-side setup is the owner's, and is not scripted yet.** For live mode your PingFederate needs the sign-in adapter, the PingOne data store that supplies user claims, an OpenID Connect policy and an access token manager for the lab's clients, and each code-flow client needs "Allow Authentication API OAuth initiation". `scripts/provision-pf.mjs` and `scripts/provision-pf-ciba-approver.mjs` (owner-run, dry run by default) create the lab's clients and the CIBA approver from template objects; they do not create those four objects.
 
@@ -68,7 +80,8 @@ If the port is taken:
 The **Mock / Live** toggle is in the header on every page, presenter mode included. The banner shows the same mode. Switching signs everyone out, because a token from one PingFederate means nothing to the other.
 
 - If you never chose, the lab starts in live mode when an issuer is saved, otherwise in mock mode. Saving an issuer later does not switch modes; only the toggle does.
-- Mock sign-in (rule 11) needs `ALLOW_MOCK_SIGNIN=1` (the Docker form sets it). It is refused behind a proxy (`Forwarded` or `X-Forwarded-*` headers) and on a non-loopback bind, unless `LAB_PUBLISH=loopback` says the port is published on 127.0.0.1 only (the Docker form does). `NODE_ENV=production` is not a guard: the Docker image runs with it.
+- Mock sign-in (rule 11) needs `ALLOW_MOCK_SIGNIN=1`. The Docker form sets it. A plain `npm start` sets it for you only when the lab is bound to 127.0.0.1, `LAB_PUBLISH` is unset and no PingFederate is saved in Settings; an explicit `ALLOW_MOCK_SIGNIN` (even `0`) always wins. It is refused behind a proxy (`Forwarded` or `X-Forwarded-*` headers) and on a non-loopback bind, unless `LAB_PUBLISH=loopback` says the port is published on 127.0.0.1 only (the Docker form does). `NODE_ENV=production` is not a guard: the Docker image runs with it. While it is refused, `GET /api/mode` sends no mock user name or password.
+- In mock mode, Clear (Playground) and Reset delete a client a half-finished DCR run left on the mock. On a real PingFederate the lab never deletes on its own: Reset only lists what is left.
 - `GET /api/health` reports `runtime: offline` in mock mode and `live` in live mode.
 
 Workspaces (rule 13): the header names the current workspace (default `default`). Each workspace has its own sign-in, runs, results, tokens and trace; saved settings are shared. A browser keeps one cookie for all of its workspaces.
@@ -76,7 +89,7 @@ Workspaces (rule 13): the header names the current workspace (default `default`)
 ## Health, doctor and reset
 
 - `GET /api/health` returns `demo-health/1` (public, GET only, no detail).
-- `npm run doctor` prints one line per check and exits 1 on failure: Node 26, settings readable, the mock-mode network guard, the health route, the port, and the 10 diagrams.
+- `npm run doctor` prints one line per check and exits 1 on failure: Node 26, settings readable, whether plain `npm start` allows mock sign-in, the mock-mode network guard, the health route, the port, and the 10 diagrams.
 - `npm run reset [workspace]` clears the run state of one workspace on the running lab (default workspace `default`, or set `WORKSPACE`). Sign-ins and saved settings stay. It lists any DCR client left on PingFederate. The page's "Reset this card" clears one card.
 
 ## Docker (optional)
@@ -86,6 +99,8 @@ docker compose up --build -d      # mock mode, plain http, nothing to set up
 ```
 
 Open http://127.0.0.1:5400. The port is published on 127.0.0.1 only (a test pins that), the container runs as a non-root user with a read-only filesystem, and the saved mode lives in a named volume.
+
+**Another port:** `HOST_PORT=5401 docker compose up --build -d` (5400-5449). One number is used on both sides of the mapping and as the lab's `PORT`: the lab answers only the Host it is published as, so changing just the host side, or just `PORT`, gets `403 host_not_allowed`. If you edit `docker-compose.yml` by hand, change `PORT` and both sides of `ports:` together.
 
 **Live mode over https** needs the second compose file and four values, all optional until you want it: `PFLAB_CA_FILE` (the root certificate that signed your PingFederate's certificate), `PFLAB_TLS_CERT_FILE` and `PFLAB_TLS_KEY_FILE` (the certificate the lab serves https with; it must cover 127.0.0.1, localhost and `LAB_ALLOWED_HOSTS`), and `PF_HOSTNAME` (the host name in your issuer, which has to point at the Mac from inside the container). Copy `.env.example` to `.env`, fill them in, and add the live file:
 
@@ -99,10 +114,11 @@ The live file mounts only the lab's settings folder and the three certificate fi
 ## Tests
 
 ```sh
-npm test      # server: node --test test/*.test.js, then web: vitest
+npm test      # server: node --test test/*.test.js, and web: vitest; both run even if one fails
+npm run e2e   # after npm run build: a real Chromium runs all 11 Playground flows in mock mode (needs: npx playwright install chromium)
 ```
 
-On Node 26.8.2: server 119 passed, 0 failed; web 64 passed, 0 failed. `npm run doctor` is all ok.
+On Node 26.8.2: server 123 passed, 0 failed; web 71 passed, 0 failed. `npm run doctor` is all ok. `npm run e2e` checks that every flow finishes, that the explainer and the Token tab render in light and dark at 1280 and 375 pixels wide, and that no request leaves localhost. CI runs the tests, the doctor, the conformance check (`server/test/demo-kit-conformance.mjs`, a copy of demo-kit-base's script, `--new`), a Docker build and start, and the e2e run.
 
 ## Troubleshooting
 
@@ -110,8 +126,8 @@ On Node 26.8.2: server 119 passed, 0 failed; web 64 passed, 0 failed. `npm run d
 2. **"PingFederate no longer knows this sign-in (404)".** The flow expired or PingFederate restarted. Press Run again.
 3. **Port in use.** See Ports above.
 4. **Live mode cannot reach PingFederate from Docker.** Use the live compose file (see Docker above). Its certificate must be trusted by the container (`PFLAB_CA_FILE`) and `PF_HOSTNAME` must name the host in your issuer.
-5. **Mock sign-in is refused.** It is refused when `ALLOW_MOCK_SIGNIN=1` is not set, behind a proxy, and on a non-loopback bind; run the lab on 127.0.0.1.
+5. **Mock sign-in is refused.** Start with `ALLOW_MOCK_SIGNIN=1 npm start` on 127.0.0.1. It is also refused behind a proxy and on a non-loopback bind, and plain `npm start` does not set it once a PingFederate is saved in Settings.
 
 ## Ownership
 
-Owner: the Ping demo family owner. Licence: internal Ping demo use. Report problems to the owner, or on the repository's issues once the repository exists.
+Owner: the Ping demo family owner. Licence: internal Ping demo use. Report problems to the owner, or on the repository's issues (https://github.com/ping-sandbox/pingfederate-LAB/issues).

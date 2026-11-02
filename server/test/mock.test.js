@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLab } from './helpers.js';
-import { MOCK_USER, mockSignInRefusal, labelMock } from '../src/mock.js';
+import { MOCK_USER, mockSignInRefusal, hostRunAllowsMockSignIn, labelMock } from '../src/mock.js';
 import { createNetguard } from '../src/netguard.js';
 
 const MOCK_ENV = { ALLOW_MOCK_SIGNIN: '1' };
@@ -149,7 +149,12 @@ test('rule 11: mock sign-in needs ALLOW_MOCK_SIGNIN=1, no proxy headers, and a l
     assert.equal(r.data.error, 'mock_signin_refused');
     assert.equal((await off.lab.call('POST', '/api/cards/pkce/start')).status, 403);
     assert.equal((await off.lab.call('POST', '/api/cards/ciba/start', {})).status, 403);
-    assert.equal((await off.lab.call('GET', '/api/mode')).data.mockSignIn.allowed, false);
+    // A refused lab hands out neither the mock user nor its password, and the refusal says the exact command.
+    const refused = (await off.lab.call('GET', '/api/mode')).data.mockSignIn;
+    assert.equal(refused.allowed, false);
+    assert.deepEqual(Object.keys(refused).sort(), ['allowed', 'refusal']);
+    assert.match(refused.refusal, /ALLOW_MOCK_SIGNIN=1 npm start/);
+    assert.doesNotMatch(JSON.stringify(refused), new RegExp(MOCK_USER.password));
   } finally { await off.lab.close(); }
   const on = await mockLab();
   try {
@@ -162,9 +167,43 @@ test('rule 11: mock sign-in needs ALLOW_MOCK_SIGNIN=1, no proxy headers, and a l
   try { assert.equal((await wide.lab.call('POST', '/api/signin/start')).status, 403); } finally { await wide.lab.close(); }
   const docker = await mockLab({ bind: '0.0.0.0', env: { ...MOCK_ENV, LAB_PUBLISH: 'loopback' } });
   try { assert.equal((await docker.lab.call('POST', '/api/signin/start')).status, 200); } finally { await docker.lab.close(); }
-  assert.match(mockSignInRefusal({ env: { NODE_ENV: 'production' }, bind: '127.0.0.1', headers: {} }), /Mock sign-in is off\. Set ALLOW_MOCK_SIGNIN=1/);
+  assert.match(mockSignInRefusal({ env: { NODE_ENV: 'production' }, bind: '127.0.0.1', headers: {} }), /Mock sign-in is off\. Start the lab with ALLOW_MOCK_SIGNIN=1 npm start/);
+  // In Docker the switch is the compose file, so the message must not tell the owner to run npm start.
+  assert.match(mockSignInRefusal({ env: { LAB_PUBLISH: 'loopback' }, bind: '0.0.0.0', headers: {} }), /compose file.*docker compose up -d/);
+  assert.doesNotMatch(mockSignInRefusal({ env: { LAB_PUBLISH: 'loopback' }, bind: '0.0.0.0', headers: {} }), /npm start/);
   assert.equal(mockSignInRefusal({ env: { NODE_ENV: 'production', ALLOW_MOCK_SIGNIN: '1' }, bind: '127.0.0.1', headers: {} }), null);
   assert.match(mockSignInRefusal({ env: MOCK_ENV, bind: '127.0.0.1', headers: { forwarded: 'for=x' } }), /proxy/);
+});
+
+// A plain `npm start` (hostRun) on loopback with no PingFederate saved allows mock sign-in; nothing wider does.
+test('rule 11 on a host run: allowed on loopback with no tenant settings, refused on every other bind, proxy, Docker marker or saved issuer', async () => {
+  const signinStatus = async (opts, headers) => {
+    const { lab } = await mockLab({ env: {}, hostRun: true, ...opts });
+    try { return (await lab.call('POST', '/api/signin/start', {}, headers)).status; } finally { await lab.close(); }
+  };
+  assert.equal(await signinStatus({}), 200, 'plain npm start works');
+  assert.equal(await signinStatus({}, { 'X-Forwarded-For': '203.0.113.9' }), 403, 'behind a proxy');
+  assert.equal(await signinStatus({}, { Forwarded: 'for=203.0.113.9' }), 403);
+  assert.equal(await signinStatus({ bind: '0.0.0.0' }), 403, 'non-loopback bind');
+  assert.equal(await signinStatus({ env: { NODE_ENV: 'production' } }), 200, 'NODE_ENV is not a guard either way');
+  assert.equal(await signinStatus({ env: { ALLOW_MOCK_SIGNIN: '0' } }), 403, 'an explicit off wins');
+  assert.equal(await signinStatus({ env: { LAB_PUBLISH: 'loopback' } }), 403, 'the Docker marker needs the explicit flag');
+  assert.equal(await signinStatus({ hostRun: false }), 403, 'only index.js asks for the host-run default');
+  // A saved issuer is a tenant: the default ends, and saving one later ends it at once.
+  assert.equal(await signinStatus({ settings: { pf: { issuer: 'https://pf.example' } }, mode: 'mock' }), 403);
+  const { lab } = await mockLab({ env: {}, hostRun: true });
+  try {
+    assert.equal((await lab.call('GET', '/api/mode')).data.mockSignIn.allowed, true);
+    await lab.call('PUT', '/api/settings', { pf: { issuer: 'https://pf.example' } });
+    const after = (await lab.call('GET', '/api/mode')).data.mockSignIn;
+    assert.equal(after.allowed, false);
+    assert.equal((await lab.call('POST', '/api/signin/start')).status, 403);
+  } finally { await lab.close(); }
+  const base = { env: {}, bind: '127.0.0.1', hasTenant: false };
+  assert.equal(hostRunAllowsMockSignIn(base), true);
+  for (const bad of [{ bind: '0.0.0.0' }, { bind: '::' }, { hasTenant: true }, { env: { ALLOW_MOCK_SIGNIN: '' } }, { env: { LAB_PUBLISH: 'loopback' } }]) {
+    assert.equal(hostRunAllowsMockSignIn({ ...base, ...bad }), false, JSON.stringify(bad));
+  }
 });
 
 test('mode: unset follows the issuer, a chosen mode is saved, switching signs everyone out; live sign-in is unguarded', async () => {
@@ -205,9 +244,14 @@ test('docker-compose allows mock sign-in only with the loopback publish it pins;
   const live = fs.readFileSync(path.join(dir, 'docker-compose.live.yml'), 'utf8');
   assert.match(compose, /ALLOW_MOCK_SIGNIN: "1"/);
   assert.match(compose, /LAB_PUBLISH: loopback/);
-  const published = (text) => [...text.matchAll(/^\s+- "([^"]+:\d+)"$/gm)].map((m) => m[1]).filter((p) => /:\d+:\d+$/.test(p));
+  // A published port is `host:container`, each side a number or a ${HOST_PORT:-5400} default.
+  const PORT_SIDE = String.raw`(?:\d+|\$\{HOST_PORT:-\d+\})`;
+  const published = (text) => [...text.matchAll(/^\s+- "([^"]+)"$/gm)].map((m) => m[1]).filter((p) => new RegExp(`^(?:[\\d.]+:)?${PORT_SIDE}:${PORT_SIDE}$`).test(p));
   const ports = published(compose);
   assert.ok(ports.length > 0 && ports.every((p) => p.startsWith('127.0.0.1:')), ports.join(','));
+  // One variable on both sides of the mapping and as the lab's PORT: the lab answers only the Host it is published as.
+  assert.deepEqual(ports, ['127.0.0.1:${HOST_PORT:-5400}:${HOST_PORT:-5400}']);
+  assert.match(compose, /PORT: "\$\{HOST_PORT:-5400\}"/);
   assert.deepEqual(published(live), [], 'the live file adds no published ports');
   // The base file starts with nothing set: no required variable, no certificate mount, plain http.
   assert.doesNotMatch(compose, /:\?/);

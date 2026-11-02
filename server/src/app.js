@@ -6,7 +6,7 @@ import { loadCustomerConfig, publicConfig } from './customer.js';
 import { renderStory, verticalList, StoryError } from './stories.js';
 import { createSettings, SettingsError } from './settings.js';
 import { createNetguard } from './netguard.js';
-import { createMock, modeSettings, mockSignInRefusal, labelMock, MOCK_USER } from './mock.js';
+import { createMock, modeSettings, mockSignInRefusal, hostRunAllowsMockSignIn, labelMock, MOCK_USER } from './mock.js';
 import { createOutbound } from './outbound.js';
 import { createPf, LabError } from './pf.js';
 import { createPiFlow } from './piflow.js';
@@ -62,7 +62,8 @@ export function labAddresses({ port, env = process.env }) {
 }
 
 // bind: the address index.js listens on (mock sign-in is refused on a non-loopback one, rule 11).
-export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, now = Date.now, webDist = DEFAULT_WEB_DIST, customerFile, env = process.env, bind = '127.0.0.1' } = {}) {
+// hostRun: index.js sets it, so a plain `npm start` on loopback with no PingFederate saved allows mock sign-in (hostRunAllowsMockSignIn).
+export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, now = Date.now, webDist = DEFAULT_WEB_DIST, customerFile, env = process.env, bind = '127.0.0.1', hostRun = false } = {}) {
   // customer.config.json (or CUSTOMER_CONFIG): branding and vocabulary, validated once at start.
   const customer = loadCustomerConfig({ file: customerFile, env });
   // The owner's saved settings (and the chosen mode); `settings` below is what the cards read in the current mode.
@@ -81,6 +82,8 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   const exchange = createExchange({ pf, settings, now });
   const userinfo = createUserinfo({ pf, settings });
   const addresses = labAddresses({ port, env });
+  // The environment rule 11 reads: the real one, plus ALLOW_MOCK_SIGNIN=1 for a host run that qualifies. Read per request, because saving an issuer ends the default.
+  const signInEnv = () => (hostRun && hostRunAllowsMockSignIn({ env, bind, hasTenant: Boolean(saved.value('pf', 'issuer')) }) ? { ...env, ALLOW_MOCK_SIGNIN: '1' } : env);
   const sessions = createSessions({ now, secure: addresses.scheme === 'https' });
 
   const app = express();
@@ -132,8 +135,9 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   app.get('/api/ciba-approver/requests/:transactionId', wrap((req) => approver.lookup(req.headers.authorization, req.params.transactionId)));
 
   // `npm run reset` (before the session middleware, so the script never creates a session): clears one workspace for every browser. Run state only; saved settings and sign-ins stay.
-  app.post('/api/workspaces/:workspace/reset', wrap((req) => {
+  app.post('/api/workspaces/:workspace/reset', wrap(async (req) => {
     if (!validWorkspace(req.params.workspace)) throw new LabError('bad_workspace', 'The workspace id is lowercase letters, digits and hyphens (1 to 32 characters)', 400);
+    if (mode() === 'mock') for (const s of sessions.inWorkspace(req.params.workspace)) await dcr.discard(s);
     return { ok: true, workspace: req.params.workspace, ...sessions.resetWorkspace(req.params.workspace) };
   }));
 
@@ -148,11 +152,15 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   }));
 
   // Mock or live, for the whole lab. Switching signs everyone out: tokens from one PingFederate mean nothing to the other.
-  const modeView = (req) => ({
-    mode: mode(),
-    issuer: settings.value('pf', 'issuer') || null,
-    mockSignIn: mode() === 'mock' ? { allowed: !mockSignInRefusal({ env, bind, headers: req.headers }), refusal: mockSignInRefusal({ env, bind, headers: req.headers }), username: MOCK_USER.username, password: MOCK_USER.password } : null,
-  });
+  // The mock user's password is sent only when mock sign-in is allowed, so a refused lab hands out nothing.
+  const modeView = (req) => {
+    const refusal = mode() === 'mock' ? mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers }) : null;
+    return {
+      mode: mode(),
+      issuer: settings.value('pf', 'issuer') || null,
+      mockSignIn: mode() === 'mock' ? { allowed: !refusal, refusal, ...(refusal ? {} : { username: MOCK_USER.username, password: MOCK_USER.password }) } : null,
+    };
+  };
   app.get('/api/mode', wrap((req) => modeView(req)));
   app.put('/api/mode', wrap((req) => {
     const next = req.body?.mode;
@@ -168,7 +176,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   const SIGNS_IN = /^\/api\/(signin\/(start|credentials)|cards\/(pkce|par|rar|dpop|ciba)\/(start|credentials))$/;
   app.use((req, res, next) => {
     if (mode() !== 'mock' || req.method !== 'POST' || !SIGNS_IN.test(req.path)) return next();
-    const refusal = mockSignInRefusal({ env, bind, headers: req.headers });
+    const refusal = mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers });
     return refusal ? res.status(403).json({ error: 'mock_signin_refused', message: refusal, mode: 'mock' }) : next();
   });
 
@@ -211,7 +219,8 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
 
   app.post('/api/cards/piflow/open', wrap(() => piflow.openAndRead()));
 
-  const dcrSteps = { 'initial-token': dcr.initialToken, register: dcr.register, use: dcr.use, delete: dcr.remove };
+  // 'discard' (the Playground's Clear): in mock mode it deletes the clients a half-finished run left; on a real PingFederate it does nothing.
+  const dcrSteps = { 'initial-token': dcr.initialToken, register: dcr.register, use: dcr.use, delete: dcr.remove, discard: (session) => (mode() === 'mock' ? dcr.discard(session) : { deleted: [] }) };
   app.post('/api/cards/dcr/:step', wrap((req) => {
     const fn = Object.hasOwn(dcrSteps, req.params.step) ? dcrSteps[req.params.step] : null;
     if (!fn) throw new LabError('unknown_step', 'Unknown DCR step', 404);
@@ -256,7 +265,11 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   }));
 
   // Reset clears this session's card runs, results and tokens; the sign-in and the settings stay.
-  app.post('/api/reset', wrap((req) => ({ ok: true, workspace: req.session.workspace, ...sessions.reset(req.session) })));
+  // In mock mode the clients a half-finished DCR run left on the in-process mock go first; Reset then has none to list.
+  app.post('/api/reset', wrap(async (req) => {
+    if (mode() === 'mock') await dcr.discard(req.session);
+    return { ok: true, workspace: req.session.workspace, ...sessions.reset(req.session) };
+  }));
 
   // Workspaces (rule 13): the page sends its workspace in X-Lab-Workspace (default "default"). Sessions, runs, results,
   // tokens and trace belong to one workspace; Reset clears the current one only.

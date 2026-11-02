@@ -39,6 +39,42 @@ jobs:
       - run: npm ci
       - run: npm run doctor
 
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      # A copy of demo-kit-base's gate (not shipped to demo repos yet); it sits under test/ because the gate scans every other source file, itself included.
+      - run: node server/test/demo-kit-conformance.mjs . --new
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The Docker form: build the image, start it (mock mode, the compose healthcheck must pass), read /api/health on another port.
+      - name: Build and start
+        run: HOST_PORT=5446 docker compose up --build -d --wait --wait-timeout 180
+      - name: Health answers demo-health/1
+        run: curl -fsS http://127.0.0.1:5446/api/health | tee /dev/stderr | grep -q '"schema":"demo-health/1"'
+      - name: Stop
+        if: always()
+        run: docker compose down -v
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      # All 11 Playground flows in a real browser, mock mode, zero requests off localhost.
+      - run: npm run e2e
+
   forbidden-strings:
     runs-on: ubuntu-latest
     steps:
