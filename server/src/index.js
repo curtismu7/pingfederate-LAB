@@ -12,7 +12,7 @@ if (!Number.isInteger(port) || port < 5400 || port > 5449) {
 // LAB_BIND=0.0.0.0 only inside Docker, where compose publishes the port on the Mac's 127.0.0.1 alone.
 const bind = process.env.LAB_BIND === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
 let app;
-try { app = createApp({ port, bind }); } catch (error) {
+try { app = createApp({ port, bind, hostRun: true }); } catch (error) {
   // A settings file that is a link or not JSON, or a bad LAB_ALLOWED_HOSTS, stops the lab rather than guessing.
   console.error(['file', 'env'].includes(error?.field) ? error.message : 'PingFederate LAB could not start');
   process.exit(1);

@@ -22,7 +22,7 @@ services:
     extra_hosts:
       - "${PF_HOSTNAME:?set PF_HOSTNAME in .env}:host-gateway"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('https://127.0.0.1:5400/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('https://127.0.0.1:'+(process.env.PORT||5400)+'/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3

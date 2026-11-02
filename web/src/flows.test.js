@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { FLOWS, FLOW_IDS, needsStep, runStep, stepSentence, proofPoints, traceToDiagram, latestTrace, endpointName } from './flows.js';
+import { FLOW_INFO, EXPLAIN } from './content.js';
+import { FLOWS, FLOW_IDS, lastTokenStep, tokenFacts, needsStep, runStep, stepSentence, proofPoints, traceToDiagram, latestTrace, endpointName } from './flows.js';
 import { validateDiagram } from './diagrams/validate.js';
 import { mockServer, hop } from './testApi.js';
 
@@ -114,5 +115,36 @@ describe('live sequence diagram', () => {
   it('stays within the studio limits for a very long trace', () => {
     const trace = Array.from({ length: 200 }, (_, i) => hop(`h${i}`, `Call ${i}`, 'POST', 'https://pf.example/as/token.oauth2', 200));
     expect(validateDiagram(traceToDiagram(trace))).toEqual([]);
+  });
+});
+
+describe('explainer content and token facts', () => {
+  it('every playground flow has an explainer, a spec link on an allowed site, and no copied marketing text', () => {
+    for (const id of FLOW_IDS) {
+      expect([id, typeof EXPLAIN[id]]).toEqual([id, 'string']);
+      const info = FLOW_INFO[id];
+      expect(info, id).toBeTruthy();
+      expect(info.spec.href).toMatch(/^https:\/\/(www\.rfc-editor\.org\/rfc\/rfc\d+|openid\.net\/specs\/)/);
+      expect(info.solves.length).toBeGreaterThan(20);
+      expect(info.matters.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('tokenFacts reads scopes (string or scp array), aud (string or list), sub and exp; an opaque token has none', () => {
+    expect(tokenFacts({ scope: 'a b', aud: 'x', sub: 'u', exp: 1893456000 })).toEqual({ scopes: ['a', 'b'], aud: ['x'], sub: 'u', exp: '2030-01-01T00:00:00.000Z' });
+    expect(tokenFacts({ scp: ['a', 'b'], aud: ['x', 'y'] })).toEqual({ scopes: ['a', 'b'], aud: ['x', 'y'], sub: null, exp: null });
+    expect(tokenFacts({ exp: 'soon' }).exp).toBeNull();
+    expect(tokenFacts(null)).toBeNull();
+  });
+
+  it('lastTokenStep picks the newest settled step with a token, skipping skipped, pending and failed steps', () => {
+    const view = (sub) => ({ claims: { sub } });
+    const results = [{ ok: true, data: { accessToken: view('first') } }, { ok: true, data: { idToken: view('second') } }, { skipped: true }, { pending: true }, { ok: false, data: { accessToken: view('bad') } }];
+    const found = lastTokenStep(results);
+    expect(found.index).toBe(1);
+    expect(found.tokens.map((t) => t.label)).toEqual(['ID token']);
+    expect(lastTokenStep([{ ok: true, data: {} }])).toBeNull();
+    expect(lastTokenStep([{ ok: true, data: { claims: ['sub', 'name'] } }])).toBeNull();
+    expect(lastTokenStep([{ ok: true, data: { claims: { sub: 'u' } } }]).tokens[0].label).toMatch(/claims only/);
   });
 });

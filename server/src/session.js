@@ -119,11 +119,13 @@ export function createSessions({ now = Date.now, max = MAX_SESSIONS, secure = fa
     return { sessionsReset: targets.length, dcrClientsLeftOnPingFederate: left };
   }
 
+  const inWorkspace = (workspace) => [...live.values()].filter((s) => s.workspace === workspace);
+
   // The workspaces this browser has used, plus the one it is on.
   const workspacesOf = (id, current) => [...new Set([DEFAULT_WORKSPACE, current, ...(id ? sessionsOf(id).map((s) => s.workspace) : [])])].sort();
 
   // Switching between mock and live ends every session.
   const clear = () => live.clear();
 
-  return { middleware, destroy, reset, resetWorkspace, workspacesOf, rotate, clear, size: () => live.size, has: (id) => sessionsOf(id).length > 0 };
+  return { middleware, destroy, reset, resetWorkspace, inWorkspace, workspacesOf, rotate, clear, size: () => live.size, has: (id) => sessionsOf(id).length > 0 };
 }

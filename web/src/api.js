@@ -41,5 +41,6 @@ export const api = {
   workspaces: () => call('GET', '/api/workspaces'),
   mode: () => call('GET', '/api/mode'),
   setMode: (mode) => call('PUT', '/api/mode', { mode }),
+  discardDcr: () => call('POST', '/api/cards/dcr/discard'),
   cibaDecision: (decision) => call('POST', '/api/cards/ciba/decision', { decision }),
 };

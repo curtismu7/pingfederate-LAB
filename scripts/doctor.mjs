@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp, DEMO } from '../server/src/app.js';
 import { createSettings } from '../server/src/settings.js';
+import { hostRunAllowsMockSignIn } from '../server/src/mock.js';
 import { validateDiagram } from '../web/src/diagrams/validate.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,6 +51,15 @@ check('settings file readable', () => {
   const settings = createSettings({});
   const exists = fs.existsSync(settings.file);
   return exists ? `${path.basename(path.dirname(settings.file))}/${path.basename(settings.file)} parses; mode ${settings.mode()}` : 'no settings file yet (mock mode needs none)';
+});
+
+// Plain `npm start` allows mock sign-in only on loopback with no PingFederate saved; otherwise the flows stop at the sign-in step.
+check('mock sign-in on npm start', () => {
+  const settings = createSettings({});
+  const hasTenant = Boolean(settings.value('pf', 'issuer'));
+  if (process.env.ALLOW_MOCK_SIGNIN === '1') return 'on (ALLOW_MOCK_SIGNIN=1)';
+  if (hostRunAllowsMockSignIn({ env: process.env, bind: '127.0.0.1', hasTenant })) return 'on (loopback, no PingFederate saved in Settings)';
+  return `off${hasTenant ? ' (a PingFederate is saved in Settings)' : ''}: to use the mock, start with ALLOW_MOCK_SIGNIN=1 npm start`;
 });
 
 check('mock mode: netguard self-test, zero real attempts', async () => {

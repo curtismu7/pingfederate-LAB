@@ -160,5 +160,24 @@ export function createDcr({ pf, settings, now = Date.now }) {
     return { ...out, trace: run.trace };
   }
 
-  return { initialToken, register, use, remove };
+  // Mock mode only (the caller checks the mode): Clear and Reset delete the clients a half-finished run left on the
+  // in-process mock, so the next run starts clean. Best effort; on a real PingFederate the lab never deletes on its own.
+  async function discard(session) {
+    const deleted = [];
+    if (!session.dcrClients?.length) return { deleted };
+    try {
+      const traceId = newTraceId();
+      const { metadata } = await pf.discover({ traceId });
+      if (!metadata.registrationEndpoint) return { deleted };
+      for (const client of [...session.dcrClients]) {
+        if (!client.rat) continue;
+        const { result } = await deleteClient(metadata, client, traceId);
+        if (result.ok) { untrack(session, client.clientId); deleted.push(client.clientId); }
+      }
+    } catch { /* the mock is in-process; if it cannot answer, Reset still lists what is left */ }
+    session.dcr = null;
+    return { deleted };
+  }
+
+  return { initialToken, register, use, remove, discard };
 }

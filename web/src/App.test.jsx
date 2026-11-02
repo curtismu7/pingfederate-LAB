@@ -417,6 +417,74 @@ describe('playground', () => {
   });
 });
 
+describe('playground explainer, Token tab and ID-JAG note', () => {
+  const jwt = (claims) => ({ masked: 'eyJhbG...abcd', length: 120, kind: 'JWT', header: { alg: 'ES256' }, claims });
+
+  it('every flow shows the explainer, a spec link, what it solves and why it matters for AI agents', async () => {
+    mockServer(BASE_ROUTES());
+    go('#/playground');
+    render(<App />);
+    const nav = await screen.findByRole('navigation', { name: 'Flows' });
+    const buttons = within(nav).getAllByRole('button');
+    expect(buttons).toHaveLength(11);
+    for (const b of buttons) {
+      await userEvent.click(b);
+      const about = screen.getByRole('region', { name: /^About / });
+      for (const label of ['Specification', 'What it solves', 'Why it matters for AI agents']) expect(within(about).getByText(label)).toBeInTheDocument();
+      const link = within(about).getByRole('link');
+      expect(link.getAttribute('href')).toMatch(/^https:\/\/(www\.rfc-editor\.org|openid\.net)\//);
+      expect(about.querySelector('p.explain').textContent.length).toBeGreaterThan(60);
+    }
+  });
+
+  it('says ID-JAG lives in id-jag-standalone-LAB', async () => {
+    mockServer(BASE_ROUTES());
+    go('#/playground');
+    render(<App />);
+    const link = await screen.findByRole('link', { name: 'id-jag-standalone-LAB' });
+    expect(link).toHaveAttribute('href', 'https://github.com/ping-sandbox/id-jag-standalone-LAB');
+  });
+
+  it('the Token tab shows scopes, aud, sub and exp of the newest token a step returned, and the full token view', async () => {
+    mockServer({ ...BASE_ROUTES(),
+      'POST /api/cards/token-exchange/agent': { token: jwt({ sub: 'alice', aud: ['agent.example', 'mcp.example'], scope: 'agent:invoke openid', exp: 1893456000, act: { sub: 'agent' } }), trace: [hop('agent-exchange', 'Exchange 1', 'POST', 'https://pf.example/as/token.oauth2', 200)] },
+      'POST /api/cards/token-exchange/mcp': { token: { ...jwt({ sub: 'alice', aud: 'mcp.example', scope: 'mcp:invoke', exp: 1893456000 }), raw: true, value: 'fake.mock.token', mock: true }, trace: [hop('mcp-exchange', 'Exchange 2', 'POST', 'https://pf.example/as/token.oauth2', 200)] } });
+    go('#/playground');
+    render(<App />);
+    const nav = await screen.findByRole('navigation', { name: 'Flows' });
+    await userEvent.click(within(nav).getByRole('button', { name: /Token exchange/ }));
+    expect(screen.getByRole('tab', { name: 'Activity' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByRole('tab', { name: 'Token' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Token' });
+    expect(within(panel).getByText(/No token yet/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Activity' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Execute step 1: Exchange 1: user token + agent actor' }));
+    await userEvent.click(await screen.findByRole('tab', { name: 'Token' }));
+    expect(await within(panel).findByText(/From step 1: Exchange 1/)).toBeInTheDocument();
+    expect(within(panel).getByText('agent:invoke openid')).toBeInTheDocument();
+    expect(within(panel).getByText('agent.example, mcp.example')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Activity' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Execute step 2: Exchange 2: agent token + tool-service actor' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Token' }));
+    expect(await within(panel).findByText(/From step 2: Exchange 2/)).toBeInTheDocument();
+    for (const text of ['mcp:invoke', 'mcp.example', 'alice', '2030-01-01T00:00:00.000Z']) expect(within(panel).getByText(text)).toBeInTheDocument();
+    expect(within(panel).getByText(/fake\.mock\.token/)).toBeInTheDocument();
+  });
+
+  it('Clear on DCR asks the lab to discard a leftover mock client; other flows only clear the page', async () => {
+    const server = mockServer({ ...BASE_ROUTES(), 'POST /api/cards/dcr/discard': { deleted: ['dcr-abc'] } });
+    go('#/playground');
+    render(<App />);
+    const nav = await screen.findByRole('navigation', { name: 'Flows' });
+    await userEvent.click(within(nav).getByRole('button', { name: /PKCE/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(server.calls.filter((c) => c.path === '/api/cards/dcr/discard')).toHaveLength(0);
+    await userEvent.click(within(nav).getByRole('button', { name: /Dynamic client registration/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    await waitFor(() => expect(server.calls.filter((c) => c.path === '/api/cards/dcr/discard')).toHaveLength(1));
+  });
+});
+
 describe('no redirect, no other host', () => {
   it('no source file navigates the window or calls fetch with an absolute URL', () => {
     const files = [];
