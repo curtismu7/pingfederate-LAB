@@ -89,10 +89,17 @@ const FORWARDED = ['forwarded', 'x-forwarded-for', 'x-forwarded-host', 'x-forwar
 // Returns null when allowed, or the reason it is refused.
 export function mockSignInRefusal({ env, bind, headers }) {
   // NODE_ENV is not a guard: the Docker image runs with NODE_ENV=production and mock sign-in is allowed there on purpose.
-  if (env.ALLOW_MOCK_SIGNIN !== '1') return 'Mock sign-in is off. Set ALLOW_MOCK_SIGNIN=1 to allow it on this machine.';
+  if (env.ALLOW_MOCK_SIGNIN !== '1') return 'Mock sign-in is off. Start the lab with ALLOW_MOCK_SIGNIN=1 npm start (plain npm start allows it only when no PingFederate is saved in Settings).';
   if (FORWARDED.some((h) => headers[h] !== undefined)) return 'Mock sign-in is refused behind a proxy.';
   if (!LOOPBACK_BIND.has(bind) && env.LAB_PUBLISH !== 'loopback') return 'Mock sign-in is refused on a non-loopback address.';
   return null;
+}
+
+// A host run (npm start) allows mock sign-in on its own, so the lab works out of the box: ALLOW_MOCK_SIGNIN unset,
+// a loopback bind, not Docker (LAB_PUBLISH unset), and no PingFederate saved in Settings (no tenant settings). An explicit
+// ALLOW_MOCK_SIGNIN (even 0) always wins, and the proxy-header check in mockSignInRefusal still applies to every request.
+export function hostRunAllowsMockSignIn({ env, bind, hasTenant }) {
+  return env.ALLOW_MOCK_SIGNIN === undefined && env.LAB_PUBLISH === undefined && LOOPBACK_BIND.has(bind) && !hasTenant;
 }
 
 // Marks a reply as mock: { mode: 'mock' }, every trace step and every decoded token gets mock: true.

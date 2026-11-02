@@ -43,7 +43,7 @@ export const FULL_SETTINGS = {
 };
 
 // mode: written to the settings file ('mock' | 'live'); unset, the lab picks it (live when an issuer is set).
-export async function startLab({ fake: fakeOptions = {}, settings = FULL_SETTINGS, mode, fetchImpl, now, env, bind } = {}) {
+export async function startLab({ fake: fakeOptions = {}, settings = FULL_SETTINGS, mode, fetchImpl, now, env, bind, hostRun } = {}) {
   const fake = createFakePf({ clients: structuredClone(CLIENTS), ...fakeOptions });
   const file = tempSettingsFile();
   if (settings || mode) fs.writeFileSync(file, JSON.stringify({ version: 1, ...(mode ? { mode } : {}), values: settings || {} }), { mode: 0o600 });
@@ -51,7 +51,7 @@ export async function startLab({ fake: fakeOptions = {}, settings = FULL_SETTING
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address();
   // No built UI and no customer.config by default, so tests never depend on a local build or file.
-  const app = createApp({ port, fetchImpl: fetchImpl || fake.fetchImpl, settingsFile: file, webDist: path.join(path.dirname(file), 'no-dist'), customerFile: path.join(path.dirname(file), 'no-customer.json'), ...(now ? { now } : {}), ...(env ? { env } : {}), ...(bind ? { bind } : {}) });
+  const app = createApp({ port, fetchImpl: fetchImpl || fake.fetchImpl, settingsFile: file, webDist: path.join(path.dirname(file), 'no-dist'), customerFile: path.join(path.dirname(file), 'no-customer.json'), ...(now ? { now } : {}), ...(env ? { env } : {}), ...(bind ? { bind } : {}), ...(hostRun ? { hostRun } : {}) });
   server.on('request', app);
   const base = `http://127.0.0.1:${port}`;
   let cookie = '';

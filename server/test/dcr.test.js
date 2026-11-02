@@ -69,3 +69,51 @@ test('Reset while a client is registered says which client is left on PingFedera
     assert.deepEqual(reset.data.dcrClientsLeftOnPingFederate, [reg.data.clientId]);
   } finally { await lab.close(); }
 });
+
+// Mock mode: Clear and Reset delete the clients a half-finished run left on the in-process mock; live mode never deletes on its own.
+const mockDcrLab = () => startLab({ settings: null, env: { ALLOW_MOCK_SIGNIN: '1' } });
+const leftOnMock = (lab) => [...lab.app.locals.mock.registered.keys()];
+
+test('mock DCR: Reset deletes the leftover client from the mock and lists none', async () => {
+  const lab = await mockDcrLab();
+  try {
+    await run(lab, 'initial-token');
+    const reg = await run(lab, 'register');
+    assert.deepEqual(leftOnMock(lab), [reg.data.clientId]);
+    const reset = await lab.call('POST', '/api/reset');
+    assert.deepEqual(reset.data.dcrClientsLeftOnPingFederate, []);
+    assert.deepEqual(leftOnMock(lab), [], 'the mock no longer holds the client');
+    assert.equal((await run(lab, 'initial-token')).status, 200, 'a new run is not blocked');
+  } finally { await lab.close(); }
+});
+
+test('mock DCR: the Playground Clear (discard) deletes the leftover client; npm run reset does too', async () => {
+  const lab = await mockDcrLab();
+  try {
+    await run(lab, 'initial-token');
+    const reg = await run(lab, 'register');
+    const cleared = await run(lab, 'discard');
+    assert.deepEqual(cleared.data.deleted, [reg.data.clientId]);
+    assert.deepEqual(leftOnMock(lab), []);
+    assert.equal((await run(lab, 'discard')).data.deleted.length, 0, 'nothing left is not an error');
+    await run(lab, 'initial-token');
+    await run(lab, 'register');
+    assert.equal(leftOnMock(lab).length, 1);
+    const all = await lab.call('POST', '/api/workspaces/default/reset');
+    assert.deepEqual(all.data.dcrClientsLeftOnPingFederate, []);
+    assert.deepEqual(leftOnMock(lab), []);
+  } finally { await lab.close(); }
+});
+
+test('live DCR: discard and Reset never delete on their own', async () => {
+  const lab = await startLab();
+  try {
+    await run(lab, 'initial-token');
+    const reg = await run(lab, 'register');
+    assert.deepEqual((await run(lab, 'discard')).data, { deleted: [] });
+    assert.equal(lab.fake.registered.size, 1, 'the real client is untouched');
+    const reset = await lab.call('POST', '/api/reset');
+    assert.deepEqual(reset.data.dcrClientsLeftOnPingFederate, [reg.data.clientId]);
+    assert.equal(lab.fake.registered.size, 1);
+  } finally { await lab.close(); }
+});

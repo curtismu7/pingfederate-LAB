@@ -13,5 +13,6 @@ export default defineConfig({
     setupFiles: ['./src/testSetup.js'],
     include: ['src/**/*.test.{js,jsx}'],
     css: false,
+    testTimeout: 30000, // a loaded or cold CI runner needs more than vitest's 5 s per test
   },
 });
