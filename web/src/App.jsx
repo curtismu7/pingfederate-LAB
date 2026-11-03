@@ -141,11 +141,6 @@ export default function App() {
           <a href="#/playground" aria-current={route.view === 'playground' ? 'page' : undefined}>Playground</a>
           <a href="#/settings" aria-current={route.view === 'settings' ? 'page' : undefined}>Settings</a>
         </nav>
-        <div className="who">
-          {me.signedIn
-            ? <><span>Signed in as <strong data-testid="who">{me.user?.subject}</strong></span><button type="button" onClick={signOut}>Sign out</button></>
-            : <button type="button" className="primary" onClick={signIn}>Sign in</button>}
-        </div>
         <div className="prefs">
           <div className="mode-toggle" role="group" aria-label="Mock or live PingFederate">
             <span className="mode-toggle__label">PingFederate</span>
@@ -169,6 +164,11 @@ export default function App() {
             </select>
           </label>
           <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>Presenter</button>
+        </div>
+        <div className="who">
+          {me.signedIn
+            ? <><span>Signed in as <strong data-testid="who">{me.user?.subject}</strong></span><button type="button" onClick={signOut}>Sign out</button></>
+            : <button type="button" className="primary" onClick={signIn}>Sign in</button>}
         </div>
       </header>
       <main id="main" tabIndex={-1}>
