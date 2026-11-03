@@ -25,16 +25,17 @@ describe('banner (rule 2)', () => {
     const server = mockServer({
       ...routes,
       'GET /api/config': () => ({ body: { ...routes['GET /api/config'], mode, issuer: mode === 'mock' ? 'https://pingfederate.mock.invalid' : 'https://pf.example' } }),
-      'PUT /api/mode': (body) => { mode = body.mode; return { body: { mode } }; },
+      'GET /api/info': () => ({ body: { source: mode === 'mock' ? 'mock' : 'real', realAvailable: true, realReason: null, mode } }),
+      'PUT /api/mode': (body) => { mode = body.mode === 'real' ? 'live' : 'mock'; return { body: { mode, source: body.mode } }; },
     });
     render(<App />);
     expect(await screen.findByTestId('banner')).toHaveTextContent('MOCKMock: a simulated PingFederate inside this lab. Nothing leaves this machine.');
     const toggle = screen.getByRole('group', { name: 'Mock or live PingFederate' });
     expect(within(toggle).getByRole('button', { name: 'Mock' })).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(within(toggle).getByRole('button', { name: 'Live' }));
+    await userEvent.click(within(toggle).getByRole('button', { name: 'Real' }));
     await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('Live: every call goes to your PingFederate at https://pf.example.'));
-    expect(server.calls.find((c) => c.method === 'PUT' && c.path === '/api/mode').body).toEqual({ mode: 'live' });
-    expect(within(toggle).getByRole('button', { name: 'Live' })).toHaveAttribute('aria-pressed', 'true');
+    expect(server.calls.find((c) => c.method === 'PUT' && c.path === '/api/mode').body).toEqual({ mode: 'real' });
+    expect(within(toggle).getByRole('button', { name: 'Real' })).toHaveAttribute('aria-pressed', 'true');
     await act(async () => { go('#/settings'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
     expect(screen.getByRole('group', { name: 'Mock or live PingFederate' })).toBeInTheDocument();
   });

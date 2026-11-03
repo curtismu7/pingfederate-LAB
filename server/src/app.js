@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { loadCustomerConfig, publicConfig } from './customer.js';
 import { renderStory, verticalList, StoryError } from './stories.js';
-import { createSettings, SettingsError } from './settings.js';
+import { createSettings, REQUIRED, SettingsError } from './settings.js';
 import { createNetguard } from './netguard.js';
 import { createMock, modeSettings, mockSignInRefusal, hostRunAllowsMockSignIn, labelMock, MOCK_USER } from './mock.js';
 import { createOutbound } from './outbound.js';
@@ -72,6 +72,8 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   const mock = createMock({ port, getApprover: () => approver });
   const settings = modeSettings({ live: saved, mock });
   const mode = () => saved.mode();
+  // Rule 19: Real (live) is available only when the live configuration is complete (every required setting).
+  const liveConfigured = () => Object.values(REQUIRED).every((entries) => entries.every(([s, f]) => Boolean(saved.value(s, f))));
   const netguard = createNetguard({ mode, mock: mock.pf, realFetch: fetchImpl });
   const outbound = createOutbound({ getIssuer: () => settings.value('pf', 'issuer'), fetchImpl: netguard.fetchImpl });
   const pf = createPf({ outbound, settings, now });
@@ -157,13 +159,18 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
     const refusal = mode() === 'mock' ? mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers }) : null;
     return {
       mode: mode(),
+      source: mode() === 'mock' ? 'mock' : 'real',
+      realAvailable: liveConfigured(),
+      realReason: liveConfigured() ? null : 'Real (live) is not available: the live settings are incomplete. Set the PingFederate issuer and every client id and secret on the Settings page.',
       issuer: settings.value('pf', 'issuer') || null,
       mockSignIn: mode() === 'mock' ? { allowed: !refusal, refusal, ...(refusal ? {} : { username: MOCK_USER.username, password: MOCK_USER.password }) } : null,
     };
   };
   app.get('/api/mode', wrap((req) => modeView(req)));
-  app.put('/api/mode', wrap((req) => {
-    const next = req.body?.mode;
+  app.put('/api/mode', wrap((req, res) => {
+    const next = req.body?.mode === 'real' ? 'live' : req.body?.mode;
+    if (req.body?.mode !== 'mock' && req.body?.mode !== 'real') throw new LabError('bad_mode', 'mode must be exactly "mock" or "real"', 400);
+    if (next === 'live' && !liveConfigured()) throw new LabError('real_not_available', 'Real (live) is not available: the live settings are incomplete. Set the PingFederate issuer and every client id and secret on the Settings page.', 409);
     if (next !== mode()) {
       saved.setMode(next);
       pf.clearCache();
@@ -184,6 +191,11 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
 
   // What the page needs to draw itself: branding, vocabulary, and which PingFederate it talks to (for the banner).
   app.get('/api/config', wrap((req) => ({ customer: publicConfig(customer), issuer: settings.value('pf', 'issuer') || null, mode: mode(), workspace: req.session.workspace })));
+  // Rule 19: what the Mock/Real toggle needs.
+  app.get('/api/info', wrap((req) => {
+    const v = modeView(req);
+    return { source: v.source, realAvailable: v.realAvailable, realReason: v.realReason, mode: v.mode, issuer: v.issuer };
+  }));
   app.get('/api/stories', wrap(() => ({ verticals: verticalList(), default: customer.config.vertical })));
   app.get('/api/stories/:vertical', wrap((req) => {
     try { return renderStory(req.params.vertical, customer.config); } catch (error) {

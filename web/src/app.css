@@ -248,3 +248,4 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
   .dg-canvas { height: 340px; }
   h2 { font-size: 1.6em; }
 }
+.mode-toggle button:disabled { opacity: 0.6; }
