@@ -29,7 +29,7 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||5400)+'/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "const t=process.env.LAB_TLS_CERT?'https':'http';require(t).get({host:'127.0.0.1',port:process.env.PORT||5400,path:'/api/health',rejectUnauthorized:false},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{try{process.exit(JSON.parse(b).state==='ready'?0:1)}catch{process.exit(1)}})}).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
