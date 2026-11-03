@@ -40,7 +40,8 @@ export const api = {
   reset: () => call('POST', '/api/reset'),
   workspaces: () => call('GET', '/api/workspaces'),
   mode: () => call('GET', '/api/mode'),
-  setMode: (mode) => call('PUT', '/api/mode', { mode }),
+  setMode: (mode) => call('PUT', '/api/mode', { mode: mode === 'live' ? 'real' : mode }),
+  info: () => call('GET', '/api/info'),
   discardDcr: () => call('POST', '/api/cards/dcr/discard'),
   cibaDecision: (decision) => call('POST', '/api/cards/ciba/decision', { decision }),
 };

@@ -215,6 +215,10 @@ test('mode: unset follows the issuer, a chosen mode is saved, switching signs ev
     assert.equal((await live.call('GET', '/api/me')).data.signedIn, true);
     const bad = await live.call('PUT', '/api/mode', { mode: 'pretend' });
     assert.equal(bad.status, 400);
+    assert.equal((await live.call('GET', '/api/info')).data.realAvailable, true, 'FULL_SETTINGS configures every required live value');
+    assert.equal((await live.call('GET', '/api/info')).data.source, 'real');
+    const toMockR19 = await live.call('PUT', '/api/mode', { mode: 'mock' });
+    assert.equal(toMockR19.data.source, 'mock');
     const toMock = await live.call('PUT', '/api/mode', { mode: 'mock' });
     assert.equal(toMock.data.mode, 'mock');
     assert.equal(toMock.data.issuer, 'https://pingfederate.mock.invalid');
@@ -225,7 +229,10 @@ test('mode: unset follows the issuer, a chosen mode is saved, switching signs ev
     // Saving settings keeps the chosen mode.
     await live.call('PUT', '/api/settings', { signin: { scope: 'openid' } });
     assert.equal(JSON.parse(fs.readFileSync(live.file, 'utf8')).mode, 'mock');
-    assert.equal((await live.call('PUT', '/api/mode', { mode: 'live' })).data.mode, 'live');
+    const back = await live.call('PUT', '/api/mode', { mode: 'real' });
+    assert.equal(back.data.mode, 'live');
+    assert.equal(back.data.source, 'real');
+    assert.equal((await live.call('GET', '/api/info')).data.source, 'real');
     assert.equal((await live.call('GET', '/api/config')).data.issuer, 'https://pf.example');
   } finally { await live.close(); }
 });
