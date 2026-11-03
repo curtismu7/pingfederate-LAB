@@ -9,5 +9,8 @@
   "composeOverlays": [],
   "port": 5400,
   "notes": "Host-run: npm install && npm run build && npm start (port 5400, loopback only; mock mode needs no settings, and mock sign-in is on while no PingFederate is saved). Docker: docker compose up --build -d (publishes 127.0.0.1:5400 only; HOST_PORT=<5400-5449> moves it). Catalog A28.",
-  "catalogId": "A28"
+  "catalogId": "A28",
+  "pingProducts": [
+    "pingfederate"
+  ]
 }
