@@ -28,6 +28,8 @@ jobs:
           node-version: 26
       - run: npm ci
       - run: npm test
+      # The vendored shared stylesheet must match the hash pinned when it was last re-vendored.
+      - run: bash scripts/check-ui-standard.sh
 
   doctor:
     runs-on: ubuntu-latest

@@ -90,12 +90,19 @@ export default function App() {
   }, [config]);
   // Mock or live for the whole lab; switching signs everyone out, so the page reloads its state.
   const [switching, setSwitching] = useState(false);
+  // Rule 19: Real is disabled with the server's reason while the live settings are incomplete. The fields ride
+  // /api/info (fetched once and after every switch), so the toggle always shows the server's answer.
+  const [modeInfo, setModeInfo] = useState(null);
+  useEffect(() => { api.info().then((r) => setModeInfo(r.ok ? r.data : null)).catch(() => setModeInfo(null)); }, []);
+  const realAvailable = modeInfo ? modeInfo.realAvailable !== false : null; // null = not loaded yet
   const setMode = async (next) => {
     if (next === config?.mode || switching) return;
+    if (next === 'live' && realAvailable === false) return; // Real is disabled with the reason; the button is too
     setSwitching(true);
     const r = await api.setMode(next);
     setSwitching(false);
     if (!r.ok) { setLoadError(r.data?.message || r.data?.error || 'could not switch modes'); return; }
+    api.info().then((ir) => setModeInfo(ir.ok ? ir.data : null)).catch(() => {});
     await refresh();
   };
   useEffect(() => {
@@ -142,11 +149,18 @@ export default function App() {
         <div className="prefs">
           <div className="mode-toggle" role="group" aria-label="Mock or live PingFederate">
             <span className="mode-toggle__label">PingFederate</span>
-            {['mock', 'live'].map((m) => (
-              <button key={m} type="button" className="mode-toggle__button" aria-pressed={mode === m} disabled={switching} onClick={() => setMode(m)}>
-                {m === 'mock' ? 'Mock' : 'Live'}
-              </button>
-            ))}
+            {[
+              ['mock', 'Mock', false],
+              ['live', 'Real', true],
+            ].map(([m, label, isReal]) => {
+              const off = switching || (isReal && realAvailable === false);
+              const why = isReal && realAvailable === false && modeInfo?.realReason ? modeInfo.realReason : undefined;
+              return (
+                <button key={m} type="button" className="mode-toggle__button" aria-pressed={mode === m} disabled={off} title={why} onClick={() => setMode(m)} data-testid={`mode-${isReal ? 'real' : 'mock'}`}>
+                  {label}
+                </button>
+              );
+            })}
           </div>
           <WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />
           <label className="inline">Theme
