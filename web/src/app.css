@@ -243,3 +243,13 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
   h2 { font-size: 1.6em; }
 }
 .mode-toggle button:disabled { opacity: 0.6; }
+
+/* Per-edge phase colors (owner, 2026-11-03): a colored line per flow phase, from the shared --dg-* tokens. */
+.edge-red .react-flow__edge-path { stroke: var(--dg-red); }
+.edge-blue .react-flow__edge-path { stroke: var(--dg-blue); }
+.edge-green .react-flow__edge-path { stroke: var(--dg-green); }
+.edge-dark .react-flow__edge-path { stroke: var(--dg-dark); }
+.edge-grey .react-flow__edge-path { stroke: var(--dg-grey); }
+.edge-amber .react-flow__edge-path { stroke: var(--dg-amber); }
+.edge-red.edge-on .react-flow__edge-path, .edge-blue.edge-on .react-flow__edge-path, .edge-green.edge-on .react-flow__edge-path,
+.edge-dark.edge-on .react-flow__edge-path, .edge-grey.edge-on .react-flow__edge-path, .edge-amber.edge-on .react-flow__edge-path { stroke: var(--accent); }

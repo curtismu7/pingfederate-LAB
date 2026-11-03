@@ -83,12 +83,14 @@
     {
       "source": "user",
       "target": "token",
-      "label": "subject_token"
+      "label": "subject_token",
+      "color": "green"
     },
     {
       "source": "agent",
       "target": "token",
-      "label": "actor_token"
+      "label": "actor_token",
+      "color": "green"
     },
     {
       "source": "token",
@@ -98,12 +100,14 @@
     {
       "source": "mid",
       "target": "token",
-      "label": "subject_token"
+      "label": "subject_token",
+      "color": "green"
     },
     {
       "source": "svc",
       "target": "token",
-      "label": "actor_token"
+      "label": "actor_token",
+      "color": "green"
     },
     {
       "source": "token",

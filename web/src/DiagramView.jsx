@@ -79,9 +79,9 @@ export function toFlow(diagram, positions, activeEdges, simulating) {
       label: e.label,
       animated: on,
       markerEnd: { type: MarkerType.ArrowClosed },
-      className: `${on ? 'edge-on' : simulating ? 'edge-dim' : ''}${e.dashed ? ' edge-dashed' : ''}`,
+      className: `${on ? 'edge-on' : simulating ? 'edge-dim' : ''}${e.dashed ? ' edge-dashed' : ''}${e.color ? ` edge-${e.color}` : ''}`,
       style: { strokeWidth: on ? 3 : 1.5, ...(e.dashed ? { strokeDasharray: '6 4' } : {}) },
-      data: { labelShift: shifts[i] },
+      data: { labelShift: shifts[i], color: e.color, active: on },
     };
   });
   return { nodes, edges };

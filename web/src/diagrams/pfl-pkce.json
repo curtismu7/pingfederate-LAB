@@ -59,22 +59,26 @@
     {
       "source": "verifier",
       "target": "lab",
-      "label": "S256 hash = code_challenge"
+      "label": "S256 hash = code_challenge",
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "authz",
-      "label": "code_challenge"
+      "label": "code_challenge",
+      "color": "green"
     },
     {
       "source": "authz",
       "target": "lab",
-      "label": "code"
+      "label": "code",
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "token",
-      "label": "code + code_verifier"
+      "label": "code + code_verifier",
+      "color": "green"
     }
   ],
   "steps": [

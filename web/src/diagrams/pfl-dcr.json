@@ -59,33 +59,39 @@
     {
       "source": "lab",
       "target": "token",
-      "label": "initial access token (dcr:register)"
+      "label": "initial access token (dcr:register)",
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "reg",
       "label": "register, no token",
-      "dashed": true
+      "dashed": true,
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "reg",
-      "label": "register with the token"
+      "label": "register with the token",
+      "color": "green"
     },
     {
       "source": "reg",
       "target": "client",
-      "label": "client_id, secret, registration token"
+      "label": "client_id, secret, registration token",
+      "color": "blue"
     },
     {
       "source": "client",
       "target": "token",
-      "label": "token as the new client"
+      "label": "token as the new client",
+      "color": "green"
     },
     {
       "source": "client",
       "target": "reg",
-      "label": "delete with registration token"
+      "label": "delete with registration token",
+      "color": "green"
     }
   ],
   "steps": [
