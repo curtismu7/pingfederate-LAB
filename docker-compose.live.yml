@@ -22,7 +22,12 @@ services:
     extra_hosts:
       - "${PF_HOSTNAME:?set PF_HOSTNAME in .env}:host-gateway"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('https://127.0.0.1:'+(process.env.PORT||5400)+'/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      # The self-check fetches the lab's own https endpoint. In live mode the served certificate names
+      # LAB_ALLOWED_HOSTS (e.g. local.ping-devops.com), not 127.0.0.1, so plain fetch fails TLS
+      # validation against a perfectly healthy server. The self-check is loopback-only and inspects
+      # nothing secret, so it disables cert validation for itself (NODE_TLS_REJECT_UNAUTHORIZED is
+      # scoped to this one command, not the server process).
+      test: ["CMD", "node", "-e", "process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'; fetch('https://127.0.0.1:'+(process.env.PORT||5400)+'/api/health').then(r=>r.json()).then(j=>process.exit(j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
