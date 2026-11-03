@@ -139,14 +139,8 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
 .dg-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
 .dg-canvas { height: 440px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
 .dg-now { margin: 6px 0; background: var(--surface-2); border-left: 4px solid var(--accent); padding: 6px 10px; }
-.dg-node { padding: 8px 12px; border-radius: 8px; max-width: 240px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; border: 2px solid var(--border); background: var(--surface); color: var(--text); }
+.dg-node { max-width: 240px; } /* colors, stripe and roles: shared standalone-ui.css .dg-node / .dg-<role> */
 .dg-node span { font-size: 12px; overflow-wrap: anywhere; }
-.dg-dark { background: var(--text); color: var(--bg); border-color: var(--text); }
-.dg-red { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.dg-blue { background: var(--accent-deep); color: var(--on-accent); border-color: var(--accent-deep); }
-.dg-grey { background: var(--surface-2); }
-.dg-green { border-color: var(--status-ok); border-width: 3px; }
-.dg-amber { background: var(--accent-soft); border-color: var(--accent); }
 .handle-back { opacity: 0; pointer-events: none; top: 70%; }
 .react-flow { --xy-edge-stroke: var(--muted); --xy-background-color: var(--surface); --xy-edge-label-color: var(--text); --xy-edge-label-background-color: var(--surface); }
 .react-flow__edge-textbg { fill: var(--surface); }
