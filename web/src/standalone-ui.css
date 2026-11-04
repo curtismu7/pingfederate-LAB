@@ -197,3 +197,58 @@ button[aria-pressed="true"] {
     animation: none !important;
   }
 }
+
+/* ===== Diagrams (owner-approved 2026-11-03, mock: shared/device-diagram-color-mock.html) =====
+   The outline + stripe box look, shared by every lab's ReactFlow diagrams (rule 17/5).
+   Roles: dark = lab/neutral, blue = PingOne/IAM, green = person/success, red = Ping Red
+   (active/deny), amber = warning, grey = external. Layout stays in each app's stylesheet;
+   this file owns the colors. Dark stripes use saturated brand colors (--dg-*), never
+   the near-white --text/--focus. */
+:root {
+  --dg-dark: var(--text);
+  --dg-blue: var(--focus);
+  --dg-green: var(--status-ok);
+  --dg-red: var(--accent);
+  --dg-grey: var(--muted);
+  --dg-amber: var(--status-warn);
+  --dg-stripe: 10px;
+}
+:root[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  --dg-dark: var(--box-blue);
+  --dg-blue: var(--status-info);
+  --dg-green: #4cc26b;
+  --dg-red: var(--accent);
+  --dg-grey: var(--muted);
+  --dg-amber: var(--status-warn);
+}
+.dg-node {
+  padding: 8px 12px 8px 12px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 2px solid var(--border);
+  border-left-width: var(--dg-stripe);
+}
+.dg-node strong { font-weight: 700; }
+.dg-node span { font-size: 12px; overflow-wrap: anywhere; color: var(--text-body); }
+.dg-node.hot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dg-dark  { border-left-color: var(--dg-dark); }
+.dg-blue  { border-left-color: var(--dg-blue); }
+.dg-green { border-left-color: var(--dg-green); }
+.dg-red   { border-left-color: var(--dg-red); }
+.dg-grey  { border-left-color: var(--dg-grey); }
+.dg-amber { border-left-color: var(--dg-amber); }
+.dg-now {
+  background: var(--surface-2);
+  color: var(--text);
+  border-left: 4px solid var(--accent);
+  padding: 6px 10px;
+}
+.dg-now b { color: var(--accent); }
+.edge-on .react-flow__edge-path { stroke: var(--accent); }
+.react-flow__edge.edge-dim { opacity: 0.3; }
