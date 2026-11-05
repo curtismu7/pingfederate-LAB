@@ -3,10 +3,10 @@
 One shelf with a card for each PingFederate feature behind AI agents. Every card shows each request and response raw, on a built-in mock PingFederate (offline) or on your own PingFederate.
 
 Tier: Demo
-Repo: https://github.com/ping-sandbox/pingfederate-LAB
+Repo: https://github.com/curtismu7/pingfederate-LAB
 Catalog: A28 (accepted by the owner, 2026-10-31; set in `docs/shelf-entry.json` and `content-pack.json`).
 
-ID-JAG is not in this lab. It lives in id-jag-standalone-LAB (https://github.com/ping-sandbox/id-jag-standalone-LAB); the Playground says so too.
+ID-JAG is not in this lab. It lives in id-jag-standalone-LAB (https://github.com/curtismu7/id-jag-standalone-LAB); the Playground says so too.
 
 ## What is simulated
 
@@ -21,7 +21,7 @@ ID-JAG is not in this lab. It lives in id-jag-standalone-LAB (https://github.com
 Prerequisites: Node 26, git. Docker only for the Docker form.
 
 ```sh
-git clone https://github.com/ping-sandbox/pingfederate-LAB.git
+git clone https://github.com/curtismu7/pingfederate-LAB.git
 cd pingfederate-LAB
 npm install
 npm run build
@@ -130,4 +130,4 @@ On Node 26.8.2: server 123 passed, 0 failed; web 71 passed, 0 failed. `npm run d
 
 ## Ownership
 
-Owner: the Ping demo family owner. Licence: internal Ping demo use. Report problems to the owner, or on the repository's issues (https://github.com/ping-sandbox/pingfederate-LAB/issues).
+Owner: the Ping demo family owner. Licence: internal Ping demo use. Report problems to the owner, or on the repository's issues (https://github.com/curtismu7/pingfederate-LAB/issues).

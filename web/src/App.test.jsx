@@ -443,7 +443,7 @@ describe('playground explainer, Token tab and ID-JAG note', () => {
     go('#/playground');
     render(<App />);
     const link = await screen.findByRole('link', { name: 'id-jag-standalone-LAB' });
-    expect(link).toHaveAttribute('href', 'https://github.com/ping-sandbox/id-jag-standalone-LAB');
+    expect(link).toHaveAttribute('href', 'https://github.com/curtismu7/id-jag-standalone-LAB');
   });
 
   it('the Token tab shows scopes, aud, sub and exp of the newest token a step returned, and the full token view', async () => {

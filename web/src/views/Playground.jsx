@@ -15,7 +15,7 @@ const USER_FLOWS = new Set(['ciba', 'signin', 'pkce', 'par', 'dpop', 'rar']);
 
 const TABS = [['activity', 'Activity'], ['token', 'Token']];
 
-const ID_JAG_REPO = 'https://github.com/ping-sandbox/id-jag-standalone-LAB';
+const ID_JAG_REPO = 'https://github.com/curtismu7/id-jag-standalone-LAB';
 
 // The top of every flow: the card's explainer, the specification, what it solves and why it matters for AI agents.
 function FlowExplainer({ flowId }) {
