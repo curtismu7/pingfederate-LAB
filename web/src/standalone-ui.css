@@ -252,3 +252,22 @@ button[aria-pressed="true"] {
 .dg-now b { color: var(--accent); }
 .edge-on .react-flow__edge-path { stroke: var(--accent); }
 .react-flow__edge.edge-dim { opacity: 0.3; }
+
+/* ===== Shelf link (owner request 2026-11-05): the "Shelf" button in every app's header =====
+   Opens the launcher (demo shelf) in a new tab. The URL comes from GET /api/shelf, which
+   reads SHELF_URL from the shared settings file written by scripts/bootstrap.sh. */
+.shelf-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shelf-link:hover { border-color: var(--accent); }
+.shelf-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

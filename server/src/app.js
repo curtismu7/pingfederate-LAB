@@ -18,6 +18,7 @@ import { createUserinfo } from './userinfo.js';
 import { cardList, buildAuthorizationDetail, discoveryCheck } from './cards.js';
 import { createSessions, validWorkspace, DEFAULT_WORKSPACE } from './session.js';
 import { tokenView, withTokenMode } from './trace.js';
+import { shelfInfo } from './shelfLink.js';
 
 export const DEMO = { id: 'pingfederate-lab', name: 'PingFederate LAB', version: '0.1.0' };
 const FLOW_CARDS = new Set(['pkce', 'par', 'rar', 'dpop']);
@@ -289,6 +290,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
 
   // The built web UI, when it exists. Registered last so it never shadows an API route.
   if (fs.existsSync(path.join(webDist, 'index.html'))) {
+app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo()); }); // the header "Shelf" button
     app.use(express.static(webDist, { index: 'index.html' }));
     app.get(/^\/(?!api(\/|$)).*/, (req, res) => res.sendFile(path.join(webDist, 'index.html')));
   }

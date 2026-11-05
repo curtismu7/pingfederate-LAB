@@ -5,6 +5,7 @@ import RunView from './views/RunView.jsx';
 import Settings from './views/Settings.jsx';
 import Playground from './views/Playground.jsx';
 import WorkspaceSwitch from './views/WorkspaceSwitch.jsx';
+import ShelfLink from "./components/ShelfLink.jsx";
 
 // Hash routes: #/ (shelf), #/run/<card>, #/settings[/<section.field>], #/playground.
 export function parseRoute(hash) {
@@ -133,6 +134,7 @@ export default function App() {
           <img className="brand__logo" src="/ping-logo.png" alt="Ping Identity" width="40" height="40" />
           <div>
             <h1><a href="#/">{name}</a></h1>
+        <ShelfLink />
             {config?.customer?.tagline && <p className="tagline">{config.customer.tagline}</p>}
           </div>
         </div>
