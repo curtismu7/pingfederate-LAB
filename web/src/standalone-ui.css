@@ -271,3 +271,15 @@ button[aria-pressed="true"] {
 }
 .shelf-link:hover { border-color: var(--accent); }
 .shelf-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ===== Theme picker (owner, 2026-11-06): the auto/light/dark select in every app's header =====
+   Sets data-theme on <html> only; the tokens above do the rest. */
+.shell-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.shell-theme select { min-height: 32px; padding: 4px 8px; }
