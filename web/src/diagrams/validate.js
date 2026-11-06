@@ -60,6 +60,7 @@ export function validateDiagram(d) {
       if (!ids.has(e.target)) p.push(`${at}: unknown target "${e.target}"`);
       if (e.label !== undefined && (typeof e.label !== 'string' || e.label.length > 160)) p.push(`${at}: label max 160 characters`);
       if (e.dashed !== undefined && typeof e.dashed !== 'boolean') p.push(`${at}: dashed must be true or false`);
+      if (e.color !== undefined && !COLORS.includes(e.color)) p.push(`${at}: color must be one of ${COLORS.join(', ')}`);
     });
   }
 

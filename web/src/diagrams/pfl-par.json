@@ -59,22 +59,26 @@
     {
       "source": "lab",
       "target": "par",
-      "label": "push the request"
+      "label": "push the request",
+      "color": "blue"
     },
     {
       "source": "par",
       "target": "lab",
-      "label": "request_uri (one-time)"
+      "label": "request_uri (one-time)",
+      "color": "blue"
     },
     {
       "source": "lab",
       "target": "authz",
-      "label": "client_id + request_uri"
+      "label": "client_id + request_uri",
+      "color": "blue"
     },
     {
       "source": "lab",
       "target": "token",
-      "label": "redeem the code"
+      "label": "redeem the code",
+      "color": "green"
     }
   ],
   "steps": [

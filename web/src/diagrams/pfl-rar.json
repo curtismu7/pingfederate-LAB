@@ -79,17 +79,20 @@
     {
       "source": "par",
       "target": "lab",
-      "label": "request_uri"
+      "label": "request_uri",
+      "color": "blue"
     },
     {
       "source": "lab",
       "target": "authz",
-      "label": "client_id + request_uri"
+      "label": "client_id + request_uri",
+      "color": "blue"
     },
     {
       "source": "lab",
       "target": "token",
-      "label": "code (+ DPoP proof)"
+      "label": "code (+ DPoP proof)",
+      "color": "green"
     }
   ],
   "steps": [

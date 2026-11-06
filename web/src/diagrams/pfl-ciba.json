@@ -63,7 +63,8 @@
     {
       "source": "lab",
       "target": "bc",
-      "label": "start (auth_req_id comes back)"
+      "label": "start (auth_req_id comes back)",
+      "color": "blue"
     },
     {
       "source": "bc",
@@ -84,7 +85,8 @@
     {
       "source": "lab",
       "target": "token",
-      "label": "poll: tokens"
+      "label": "poll: tokens",
+      "color": "green"
     }
   ],
   "steps": [

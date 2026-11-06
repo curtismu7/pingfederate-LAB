@@ -39,7 +39,8 @@
     {
       "source": "lab",
       "target": "ui",
-      "label": "GET with Bearer token"
+      "label": "GET with Bearer token",
+      "color": "green"
     },
     {
       "source": "ui",

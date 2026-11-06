@@ -73,7 +73,8 @@
     {
       "source": "lab",
       "target": "authz",
-      "label": "authorize (PKCE challenge)"
+      "label": "authorize (PKCE challenge)",
+      "color": "blue"
     },
     {
       "source": "authz",
@@ -93,12 +94,14 @@
     {
       "source": "authn",
       "target": "lab",
-      "label": "COMPLETED + code"
+      "label": "COMPLETED + code",
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "token",
-      "label": "code + code_verifier"
+      "label": "code + code_verifier",
+      "color": "green"
     }
   ],
   "steps": [

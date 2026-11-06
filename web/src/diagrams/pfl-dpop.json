@@ -59,22 +59,26 @@
     {
       "source": "lab",
       "target": "authz",
-      "label": "pi.flow sign-in"
+      "label": "pi.flow sign-in",
+      "color": "green"
     },
     {
       "source": "key",
       "target": "lab",
-      "label": "sign DPoP proof"
+      "label": "sign DPoP proof",
+      "color": "green"
     },
     {
       "source": "lab",
       "target": "token",
-      "label": "code + DPoP proof"
+      "label": "code + DPoP proof",
+      "color": "green"
     },
     {
       "source": "token",
       "target": "lab",
-      "label": "token_type DPoP, cnf.jkt"
+      "label": "token_type DPoP, cnf.jkt",
+      "color": "green"
     }
   ],
   "steps": [

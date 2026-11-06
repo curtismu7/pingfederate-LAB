@@ -49,7 +49,8 @@
     {
       "source": "lab",
       "target": "authz",
-      "label": "authorize, response_mode=pi.flow"
+      "label": "authorize, response_mode=pi.flow",
+      "color": "blue"
     },
     {
       "source": "authz",
