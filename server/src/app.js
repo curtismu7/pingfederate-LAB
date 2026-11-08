@@ -288,9 +288,10 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   // tokens and trace belong to one workspace; Reset clears the current one only.
   app.get('/api/workspaces', wrap((req) => ({ current: req.session.workspace, default: DEFAULT_WORKSPACE, workspaces: sessions.workspacesOf(req.session.id, req.session.workspace) })));
 
+  // The header "Shelf" button. Always mounted (not only when a web build exists), and before the web fallback.
+  app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo()); }); // the header "Shelf" button
   // The built web UI, when it exists. Registered last so it never shadows an API route.
   if (fs.existsSync(path.join(webDist, 'index.html'))) {
-app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo()); }); // the header "Shelf" button
     app.use(express.static(webDist, { index: 'index.html' }));
     app.get(/^\/(?!api(\/|$)).*/, (req, res) => res.sendFile(path.join(webDist, 'index.html')));
   }

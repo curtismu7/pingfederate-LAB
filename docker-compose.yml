@@ -11,7 +11,7 @@ services:
     ports:
       - "127.0.0.1:${HOST_PORT:-5400}:${HOST_PORT:-5400}"
     environment:
-      SHELF_URL: ${SHELF_URL:-}
+      SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       PORT: "${HOST_PORT:-5400}"
       LAB_BIND: 0.0.0.0
       # Mock sign-in (rule 11): allowed here because the port above is published on the Mac's 127.0.0.1 only
