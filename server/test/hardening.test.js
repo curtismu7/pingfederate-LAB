@@ -348,18 +348,6 @@ test('lab-proxy writes: accepted only on an allowed Host whose X-Forwarded origi
     assert.match((await post({ host: `local.ping-devops.com:${lab.port}`, origin: PROXY, ...fwd })).text, /host_not_allowed/);
     assert.match((await post({ host: 'local.ping-devops.com:8443', origin: PROXY, ...fwd })).text, /host_not_allowed/);
   } finally { await lab.close(); }
-  // Mock sign-in stays refused behind the proxy (rule 11), even though the write itself passes the Origin check.
-  const mock = await startLab({ mode: 'mock', env: { ALLOW_MOCK_SIGNIN: '1', LAB_ALLOWED_HOSTS: 'pingfederate-lab.local.ping-devops.com' } });
-  try {
-    const res = await new Promise((resolve, reject) => {
-      const req = http.request({ host: '127.0.0.1', port: mock.port, path: '/api/signin/start', method: 'POST', headers: { 'content-type': 'application/json', host: `pingfederate-lab.local.ping-devops.com:${mock.port}`, origin: PROXY, ...fwd } }, (r) => {
-        let text = ''; r.on('data', (c) => { text += c; }); r.on('end', () => resolve({ status: r.statusCode, text }));
-      });
-      req.on('error', reject); req.end('{}');
-    });
-    assert.equal(res.status, 403);
-    assert.match(res.text, /mock_signin_refused/);
-  } finally { await mock.close(); }
 });
 
 test('proxiedOrigin: forwarded headers count only on a proxy Host', () => {

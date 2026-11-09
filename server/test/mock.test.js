@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { startLab } from './helpers.js';
 import { MOCK_USER, mockSignInRefusal, hostRunAllowsMockSignIn, labelMock } from '../src/mock.js';
@@ -320,4 +321,76 @@ test('RAR in mock mode needs no typing: the card list carries the mock user and 
     const liveRar = (await live.call('GET', '/api/cards')).data.cards.find((c) => c.id === 'rar');
     assert.equal(liveRar.defaults.user, '');
   } finally { await lab.close(); await live.close(); }
+});
+
+// The family launcher (owner, 2026-11-09): mock sign-in works through https://local.ping-devops.com:8443 reaching the lab
+// by its LAB_ALLOWED_HOSTS name. Any other forwarded host or proto, or forwarded headers on loopback, are refused as before.
+test('rule 11 behind the family launcher: allowed for the launcher origin only', async () => {
+  const NAME = 'pingfederate-lab.local.ping-devops.com';
+  const LAUNCHER = { 'x-forwarded-host': 'local.ping-devops.com:8443', 'x-forwarded-proto': 'https' };
+  const { lab, real } = await mockLab({ bind: '0.0.0.0', env: { ...MOCK_ENV, LAB_PUBLISH: 'loopback', LAB_ALLOWED_HOSTS: NAME } });
+  let cookie = '';
+  const raw = (method, route, headers, body) => new Promise((resolve, reject) => {
+    const req = http.request({ host: '127.0.0.1', port: lab.port, path: route, method, headers: { ...(cookie ? { cookie } : {}), ...headers } }, (res) => {
+      const set = res.headers['set-cookie'];
+      if (set?.length) cookie = set.at(-1).split(';')[0];
+      let text = ''; res.on('data', (c) => { text += c; }); res.on('end', () => { let data = null; try { data = JSON.parse(text); } catch { /* not JSON */ } resolve({ status: res.statusCode, data, text }); });
+    });
+    req.on('error', reject); req.end(body === undefined ? undefined : JSON.stringify(body));
+  });
+  const proxied = (fwd, origin = 'https://local.ping-devops.com:8443', host = `${NAME}:${lab.port}`) => ({
+    get: (route) => raw('GET', route, { host, ...fwd }),
+    post: (route, body = {}) => raw('POST', route, { host, origin, 'content-type': 'application/json', ...fwd }, body),
+  });
+  try {
+    // Through the launcher: the mode view offers the mock user, and the full sign-in completes.
+    const via = proxied(LAUNCHER);
+    const view = (await via.get('/api/mode')).data.mockSignIn;
+    assert.deepEqual(view, { allowed: true, refusal: null, username: MOCK_USER.username, password: MOCK_USER.password });
+    const started = await via.post('/api/signin/start');
+    assert.equal(started.status, 200, started.text);
+    const done = started.data.state === 'credentials_required'
+      ? await via.post('/api/signin/credentials', { username: MOCK_USER.username, password: MOCK_USER.password })
+      : started;
+    assert.equal(done.status, 200, done.text);
+    assert.equal(done.data.outcome, 'accepted');
+    assert.equal((await via.post('/api/cards/pkce/start')).status, 200);
+    cookie = '';
+
+    // Any other forwarded host or proto, extra forwarding headers, or a different Origin: refused as before.
+    const refusedCases = [
+      [{ 'x-forwarded-host': 'evil.example', 'x-forwarded-proto': 'https' }, 'https://evil.example'],
+      [{ 'x-forwarded-host': 'local.ping-devops.com:9443', 'x-forwarded-proto': 'https' }, 'https://local.ping-devops.com:9443'],
+      [{ 'x-forwarded-host': 'local.ping-devops.com:8443', 'x-forwarded-proto': 'http' }, 'http://local.ping-devops.com:8443'],
+      [{ 'x-forwarded-proto': 'https' }, 'https://local.ping-devops.com:8443'],
+      [{ ...LAUNCHER, 'x-forwarded-for': '203.0.113.9' }, 'https://local.ping-devops.com:8443'],
+      [{ ...LAUNCHER, forwarded: 'for=203.0.113.9' }, 'https://local.ping-devops.com:8443'],
+    ];
+    for (const [fwd, origin] of refusedCases) {
+      const p = proxied(fwd, origin);
+      const res = await p.post('/api/signin/start');
+      assert.equal(res.status, 403, JSON.stringify(fwd));
+      const m = (await p.get('/api/mode')).data.mockSignIn;
+      assert.equal(m.allowed, false, JSON.stringify(fwd));
+      assert.doesNotMatch(JSON.stringify(m), new RegExp(MOCK_USER.password));
+    }
+    // A write through the launcher without the launcher's Origin is refused (no Origin, or another one).
+    assert.equal((await raw('POST', '/api/signin/start', { host: `${NAME}:${lab.port}`, 'content-type': 'application/json', ...LAUNCHER }, {})).status, 403);
+    // Launcher headers on a loopback Host are ignored: refused, and the mode view hands out nothing.
+    const loop = proxied(LAUNCHER, 'https://local.ping-devops.com:8443', `127.0.0.1:${lab.port}`);
+    assert.equal((await loop.get('/api/mode')).data.mockSignIn.allowed, false);
+    assert.equal((await raw('POST', '/api/signin/start', { host: `127.0.0.1:${lab.port}`, origin: `http://127.0.0.1:${lab.port}`, 'content-type': 'application/json', ...LAUNCHER }, {})).status, 403);
+    // Loopback without forwarded headers is unchanged.
+    assert.equal((await raw('POST', '/api/signin/start', { host: `127.0.0.1:${lab.port}`, origin: `http://127.0.0.1:${lab.port}`, 'content-type': 'application/json' }, {})).status, 200);
+    assert.equal(real.attempts.length, 0);
+  } finally { await lab.close(); }
+  // The launcher lifts the proxy refusal only: ALLOW_MOCK_SIGNIN off still refuses.
+  const off = await mockLab({ bind: '0.0.0.0', env: { LAB_PUBLISH: 'loopback', LAB_ALLOWED_HOSTS: NAME } });
+  try {
+    const res = await new Promise((resolve, reject) => {
+      const req = http.request({ host: '127.0.0.1', port: off.lab.port, path: '/api/signin/start', method: 'POST', headers: { host: `${NAME}:${off.lab.port}`, origin: 'https://local.ping-devops.com:8443', 'content-type': 'application/json', ...LAUNCHER } }, (r) => { r.resume(); resolve(r.statusCode); });
+      req.on('error', reject); req.end('{}');
+    });
+    assert.equal(res, 403);
+  } finally { await off.lab.close(); }
 });

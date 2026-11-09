@@ -7,7 +7,7 @@ Rules: STANDALONE-RULES-FOR-AGENTS.md and STANDALONE-CSS-STANDARD.md in ~/Develo
 
 Mock / Live toggle on every page (owner, 2026-10-31). Mock = `server/src/mockpf.js` reached through
 `server/src/netguard.js` (no socket, real fetch never called); live = only the configured issuer origin, through
-`server/src/outbound.js`. No other module may call fetch. Mock sign-in needs `ALLOW_MOCK_SIGNIN=1`, and is refused behind a proxy
+`server/src/outbound.js`. No other module may call fetch. Mock sign-in needs `ALLOW_MOCK_SIGNIN=1`, and is refused behind a proxy (except the family launcher, `launcherRequest`)
 and on a non-loopback bind unless `LAB_PUBLISH=loopback` (rule 11); `NODE_ENV=production` is not a guard (the Docker image sets it).
 Plain `npm start` (index.js passes `hostRun`) sets it itself only on a loopback bind with `ALLOW_MOCK_SIGNIN` and `LAB_PUBLISH` unset and no issuer saved (`hostRunAllowsMockSignIn`, read per request); never widen that.
 `GET /api/mode` sends the mock user and password only while mock sign-in is allowed.
@@ -36,7 +36,7 @@ Mock demo user: alice / correct-horse-battery (mock only). Tests use the same mo
 - Every PingFederate call is a trace step: secrets redacted (codes, verifiers, client secrets, refresh tokens,
   registration access tokens, DPoP proofs, auth_req_id, passwords, cookies, flow ids), live tokens masked + claims (mock tokens whole),
   W3C traceparent on every hop. New secret fields go into `SECRET_KEYS` in `server/src/trace.js`.
-- Loopback bind (0.0.0.0 only inside Docker, published on 127.0.0.1), Host check (loopback plus `LAB_ALLOWED_HOSTS`), same-origin JSON-only writes (behind the family lab-proxy a write is same-origin when Host is a `LAB_ALLOWED_HOSTS` name and Origin equals `X-Forwarded-Proto://X-Forwarded-Host`; forwarded headers are ignored on any other Host, and mock sign-in stays refused behind the proxy); https and a `Secure` cookie when `LAB_TLS_CERT`/`LAB_TLS_KEY` are set. Only index.js may import node:https, and only for createServer.
+- Loopback bind (0.0.0.0 only inside Docker, published on 127.0.0.1), Host check (loopback plus `LAB_ALLOWED_HOSTS`), same-origin JSON-only writes (behind the family lab-proxy a write is same-origin when Host is a `LAB_ALLOWED_HOSTS` name and Origin equals `X-Forwarded-Proto://X-Forwarded-Host`; forwarded headers are ignored on any other Host, and mock sign-in is refused behind any proxy except the family launcher, see `launcherRequest`); https and a `Secure` cookie when `LAB_TLS_CERT`/`LAB_TLS_KEY` are set. Only index.js may import node:https, and only for createServer.
 - No identifiers from other projects; tests use only `*.example` / `*.invalid` hosts. History scan must print 0.
 - EC keys via createECDH + createPrivateKey, never generateKeyPairSync('ec').
 - Agents never call a real PingFederate; the owner does live verification.
