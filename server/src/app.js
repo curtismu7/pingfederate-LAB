@@ -77,6 +77,25 @@ export function proxiedOrigin({ headers, proxyHosts }) {
   return headers.origin === `${xfp}://${xfh}`;
 }
 
+// The family launcher (AI-DEMO-Standalone shared/lab-proxy): the one forwarded origin mock sign-in is allowed from
+// (owner decision, 2026-11-09). Hard-coded on purpose, not configurable: any other proxy still gets the rule-11 refusal.
+export const LAUNCHER_ORIGIN = 'https://local.ping-devops.com:8443';
+const LAUNCHER_HOST = 'local.ping-devops.com:8443';
+const FORWARDED_OTHER = ['forwarded', 'x-forwarded-for', 'x-real-ip'];
+
+// A request that came through the launcher: Host is a LAB_ALLOWED_HOSTS name (never loopback), X-Forwarded-Proto is
+// https, X-Forwarded-Host is the launcher's, no other forwarding header (the launcher sends none), and Origin is the
+// launcher's (required on a write; a GET without Origin passes on Host and forwarded headers alone).
+export function launcherRequest({ method, headers, proxyHosts }) {
+  if (!proxyHosts.has(String(headers.host ?? '').toLowerCase())) return false;
+  if (String(headers['x-forwarded-proto'] ?? '') !== 'https') return false;
+  if (String(headers['x-forwarded-host'] ?? '').toLowerCase() !== LAUNCHER_HOST) return false;
+  if (FORWARDED_OTHER.some((h) => headers[h] !== undefined)) return false;
+  const read = method === 'GET' || method === 'HEAD';
+  if (headers.origin === undefined) return read;
+  return headers.origin === LAUNCHER_ORIGIN && proxiedOrigin({ headers, proxyHosts });
+}
+
 // bind: the address index.js listens on (mock sign-in is refused on a non-loopback one, rule 11).
 // hostRun: index.js sets it, so a plain `npm start` on loopback with no PingFederate saved allows mock sign-in (hostRunAllowsMockSignIn).
 export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, now = Date.now, webDist = DEFAULT_WEB_DIST, customerFile, env = process.env, bind = '127.0.0.1', hostRun = false } = {}) {
@@ -172,7 +191,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   // Mock or live, for the whole lab. Switching signs everyone out: tokens from one PingFederate mean nothing to the other.
   // The mock user's password is sent only when mock sign-in is allowed, so a refused lab hands out nothing.
   const modeView = (req) => {
-    const refusal = mode() === 'mock' ? mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers }) : null;
+    const refusal = mode() === 'mock' ? mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers, viaLauncher: launcherRequest({ method: req.method, headers: req.headers, proxyHosts: addresses.proxyHosts }) }) : null;
     return {
       mode: mode(),
       source: mode() === 'mock' ? 'mock' : 'real',
@@ -199,7 +218,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   const SIGNS_IN = /^\/api\/(signin\/(start|credentials)|cards\/(pkce|par|rar|dpop|ciba)\/(start|credentials))$/;
   app.use((req, res, next) => {
     if (mode() !== 'mock' || req.method !== 'POST' || !SIGNS_IN.test(req.path)) return next();
-    const refusal = mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers });
+    const refusal = mockSignInRefusal({ env: signInEnv(), bind, headers: req.headers, viaLauncher: launcherRequest({ method: req.method, headers: req.headers, proxyHosts: addresses.proxyHosts }) });
     return refusal ? res.status(403).json({ error: 'mock_signin_refused', message: refusal, mode: 'mock' }) : next();
   });
 
