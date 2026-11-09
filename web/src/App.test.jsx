@@ -248,6 +248,24 @@ describe('card run', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('the sign-in dialog is a FloatingDialog: title bar drag handle, not modal, password never prefilled, Escape closes it', async () => {
+    mockServer({ ...BASE_ROUTES(), 'POST /api/cards/pkce/start': { card: 'pkce', state: 'credentials_required', status: 'USERNAME_PASSWORD_REQUIRED', trace: [] } });
+    go('#/run/pkce');
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Run' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Sign in' });
+    expect(dialog).toHaveClass('fd-panel');
+    expect(dialog).not.toHaveAttribute('aria-modal');
+    expect(within(dialog).getByTestId('fd-titlebar')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Pop out to a new window' })).toBeInTheDocument();
+    const password = within(dialog).getByLabelText('Password');
+    expect(password).toHaveValue('');
+    expect(password.getAttribute('value') ?? '').toBe('');
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.querySelector('.creds-reopen')).not.toBeNull();
+  });
+
   it('the sign-in dialog does not block the page: Expand all opens every step behind it, Collapse all closes them', async () => {
     mockServer({ ...BASE_ROUTES(), 'POST /api/cards/pkce/start': { card: 'pkce', state: 'credentials_required', status: 'USERNAME_PASSWORD_REQUIRED',
       trace: [hop('discovery', 'Discovery', 'GET', 'https://pf.example/.well-known/openid-configuration', 200), hop('authorize', 'Open', 'GET', 'https://pf.example/as/authorization.oauth2', 200)] } });
@@ -496,6 +514,9 @@ describe('no redirect, no other host', () => {
       // The vendored return-link (Back to Customer Agent LAB) is the one same-tab navigation, only to its fixed list of targets
       // (return-link/ReturnLink.test.jsx and returnLink.app.test.jsx prove that); it calls fetch nowhere.
       if (f.endsWith(path.join('return-link', 'ReturnLink.jsx'))) { expect(text.match(/location\.assign\(link\.href\)/g)).toHaveLength(1); expect(text).not.toMatch(/fetch\(/); continue; }
+      // The vendored FloatingDialog's pop-out is the one window.open, always a blank same-origin window ('' URL), never a page;
+      // it navigates nothing and calls fetch nowhere (floating-dialog/floating-dialog.test.jsx proves the pop-out).
+      if (f.endsWith(path.join('floating-dialog', 'FloatingDialog.jsx'))) { expect(text).not.toMatch(/window\.open\((?!["']{2}, )/); expect(text).toMatch(/window\.open\("", name, /); expect(text).not.toMatch(/location\.(href|assign|replace)\s*[=(]|location\s*=|fetch\(/); continue; }
       expect([f, /location\.(href|assign|replace)\s*[=(]|window\.open\(|location\s*=/.test(text)]).toEqual([f, false]);
       expect([f, /fetch\(\s*['"`]https?:/.test(text)]).toEqual([f, false]);
     }

@@ -1,0 +1,116 @@
+/* FloatingDialog (shared/floating-dialog). Theme tokens from shared/standalone-ui.css only: no literal colours, so dark
+   and light both follow the tokens. Ported from AI-DEMO2's DraggableModal.css and draggablePanel.css, restyled to the
+   standalone UI standard. At 600px and below the panel is a full-width bottom sheet and drag / resize are off. */
+
+.fd-backdrop { position: fixed; inset: 0; background: var(--shadow-ink); }
+
+.fd-panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100vw - 16px);
+  min-width: 0;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow-ink);
+  font-family: var(--font-primary);
+  font-size: 14px;
+}
+.fd-panel[data-autoheight="true"] { max-height: calc(100vh - 16px); }
+.fd-panel:focus { outline: none; }
+.fd-panel:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.fd-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 6px 6px 0 0;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+.fd-titlebar--static { cursor: default; touch-action: auto; border-radius: 0; }
+.fd-titlebar:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.fd-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.fd-btn {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.fd-btn:hover { background: var(--accent-soft); }
+
+.fd-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 14px; }
+.fd-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); }
+.fd-blocked { margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--border); border-left: 4px solid var(--status-warn); color: var(--text); background: var(--surface-2); font-size: 13px; }
+.fd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 8 resize handles on the edges and corners */
+.fd-handle { position: absolute; z-index: 1; touch-action: none; }
+.fd-handle-n, .fd-handle-s { left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+.fd-handle-e, .fd-handle-w { top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+.fd-handle-n { top: -4px; }
+.fd-handle-s { bottom: -3px; }
+.fd-handle-e { right: -3px; }
+.fd-handle-w { left: -3px; }
+.fd-handle-ne, .fd-handle-nw, .fd-handle-se, .fd-handle-sw { width: 12px; height: 12px; }
+.fd-handle-ne { top: -4px; right: -3px; cursor: nesw-resize; }
+.fd-handle-sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
+.fd-handle-nw { top: -4px; left: -3px; cursor: nwse-resize; }
+.fd-handle-se { bottom: -3px; right: -3px; cursor: nwse-resize; }
+
+/* in-page placeholder while the dialog lives in its own window */
+.fd-placeholder {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--shadow-ink);
+  font-size: 13px;
+}
+.fd-placeholder__text { font-weight: 600; }
+.fd-mini { padding: 4px 10px; font-size: 13px; }
+
+/* the popped-out window's document */
+.fd-popout-document { margin: 0; background: var(--surface); color: var(--text); }
+.fd-popout-layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* narrow screens: a full-width sheet from the bottom; position and size from drag / resize do not apply */
+@media (max-width: 600px) {
+  .fd-panel[data-placement] {
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0;
+    width: 100% !important;
+    max-width: 100%;
+    height: auto !important;
+    max-height: 85vh;
+    border-radius: 10px 10px 0 0;
+  }
+  .fd-titlebar { cursor: default; touch-action: auto; }
+}
+.fd-popout-layout:focus { outline: none; }
