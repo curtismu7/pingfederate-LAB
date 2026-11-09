@@ -218,9 +218,8 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
 .pfg-when ul { padding-left: 1.2em; margin: 4px 0; }
 
 /* Sign-in dialog: the family's pi.flow sign-in modal (title bar, hero, fields, actions at the foot). */
-.signin-modal { position: fixed; z-index: 50; top: 72px; left: 50%; transform: translateX(-50%); width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 88px); overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 0 0 6px var(--surface-2); display: flex; flex-direction: column; }
-.signin-modal__bar { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: move; touch-action: none; user-select: none; }
-.signin-modal__bar h2 { margin: 0; font-size: 1.05em; }
+/* the sign-in dialog frame is the shared FloatingDialog (.fd-panel); the hero runs edge to edge */
+.signin-modal .fd-body { padding: 0; }
 .signin-modal__hero { padding: 16px; background: var(--accent-gradient); color: var(--on-accent); }
 .signin-modal__welcome { margin: 0; font-size: 1.25em; font-weight: 700; }
 .signin-modal__brand { margin: 2px 0 0; font-weight: 600; letter-spacing: 0.04em; }
