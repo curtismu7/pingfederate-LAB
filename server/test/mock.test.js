@@ -259,6 +259,8 @@ test('docker-compose allows mock sign-in only with the loopback publish it pins;
   // One variable on both sides of the mapping and as the lab's PORT: the lab answers only the Host it is published as.
   assert.deepEqual(ports, ['127.0.0.1:${HOST_PORT:-5400}:${HOST_PORT:-5400}']);
   assert.match(compose, /PORT: "\$\{HOST_PORT:-5400\}"/);
+  // The family lab-proxy's name for this lab, and only that name (never the bare launcher domain).
+  assert.match(compose, /LAB_ALLOWED_HOSTS: \$\{LAB_ALLOWED_HOSTS:-pingfederate-lab\.local\.ping-devops\.com\}/);
   assert.deepEqual(published(live), [], 'the live file adds no published ports');
   // The base file starts with nothing set: no required variable, no certificate mount, plain http.
   assert.doesNotMatch(compose, /:\?/);
