@@ -59,7 +59,22 @@ export function labAddresses({ port, env = process.env }) {
     scheme,
     hosts: new Set(names.map((n) => `${n}:${port}`)),
     origins: new Set(names.map((n) => `${scheme}://${n}:${port}`)),
+    // The Host values the family lab-proxy sends (LAB_ALLOWED_HOSTS names only, never loopback): the only Hosts on which
+    // X-Forwarded-Host/-Proto are believed (proxiedOrigin).
+    proxyHosts: new Set(extra.map((n) => `${n}:${port}`)),
   };
+}
+
+// Behind the lab-proxy the browser's Origin is the proxy's (https://local.ping-devops.com:8443) while Host is this lab's
+// LAB_ALLOWED_HOSTS name. A write is same-origin there when Host is one of those names, X-Forwarded-Host is set,
+// X-Forwarded-Proto is https or http, and Origin is exactly `${proto}://${xfh}`. On any other Host (loopback included)
+// the forwarded headers are ignored, so a request that did not come through the proxy cannot use them.
+export function proxiedOrigin({ headers, proxyHosts }) {
+  if (!proxyHosts.has(String(headers.host ?? '').toLowerCase())) return false;
+  const xfh = String(headers['x-forwarded-host'] ?? '').trim().toLowerCase();
+  const xfp = String(headers['x-forwarded-proto'] ?? '').trim().toLowerCase();
+  if (!xfh || (xfp !== 'https' && xfp !== 'http')) return false;
+  return headers.origin === `${xfp}://${xfh}`;
 }
 
 // bind: the address index.js listens on (mock sign-in is refused on a non-loopback one, rule 11).
@@ -124,7 +139,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
     if (req.method === 'GET' || req.method === 'HEAD') return next();
     const origin = req.headers.origin;
     const site = req.headers['sec-fetch-site'];
-    if (origin && !allowedOrigins.has(origin)) return res.status(403).json({ error: 'cross_origin_write_refused' });
+    if (origin && !allowedOrigins.has(origin) && !proxiedOrigin({ headers: req.headers, proxyHosts: addresses.proxyHosts })) return res.status(403).json({ error: 'cross_origin_write_refused' });
     if (site && site !== 'same-origin' && site !== 'none') return res.status(403).json({ error: 'cross_origin_write_refused' });
     // A cross-site form cannot send application/json without a preflight, so every write must be JSON.
     if (!String(req.headers['content-type'] || '').startsWith('application/json')) return res.status(415).json({ error: 'json_required' });

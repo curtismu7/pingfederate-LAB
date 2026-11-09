@@ -19,8 +19,8 @@ services:
       ALLOW_MOCK_SIGNIN: "1"
       LAB_PUBLISH: loopback
       PFLAB_SETTINGS_FILE: /config/pingfederate.json
-      # Extra names the lab answers to besides 127.0.0.1 and localhost; every other Host is still refused.
-      LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-}
+      # Extra names the lab answers to besides 127.0.0.1 and localhost (default: the name the family lab-proxy sends); every other Host is still refused.
+      LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-pingfederate-lab.local.ping-devops.com}
     volumes:
       # The lab's saved settings (mode, workspace-independent) live in a named volume; live mode swaps in a folder.
       - lab-config:/config

@@ -36,7 +36,7 @@ Mock demo user: alice / correct-horse-battery (mock only). Tests use the same mo
 - Every PingFederate call is a trace step: secrets redacted (codes, verifiers, client secrets, refresh tokens,
   registration access tokens, DPoP proofs, auth_req_id, passwords, cookies, flow ids), live tokens masked + claims (mock tokens whole),
   W3C traceparent on every hop. New secret fields go into `SECRET_KEYS` in `server/src/trace.js`.
-- Loopback bind (0.0.0.0 only inside Docker, published on 127.0.0.1), Host check (loopback plus `LAB_ALLOWED_HOSTS`), same-origin JSON-only writes; https and a `Secure` cookie when `LAB_TLS_CERT`/`LAB_TLS_KEY` are set. Only index.js may import node:https, and only for createServer.
+- Loopback bind (0.0.0.0 only inside Docker, published on 127.0.0.1), Host check (loopback plus `LAB_ALLOWED_HOSTS`), same-origin JSON-only writes (behind the family lab-proxy a write is same-origin when Host is a `LAB_ALLOWED_HOSTS` name and Origin equals `X-Forwarded-Proto://X-Forwarded-Host`; forwarded headers are ignored on any other Host, and mock sign-in stays refused behind the proxy); https and a `Secure` cookie when `LAB_TLS_CERT`/`LAB_TLS_KEY` are set. Only index.js may import node:https, and only for createServer.
 - No identifiers from other projects; tests use only `*.example` / `*.invalid` hosts. History scan must print 0.
 - EC keys via createECDH + createPrivateKey, never generateKeyPairSync('ec').
 - Agents never call a real PingFederate; the owner does live verification.
