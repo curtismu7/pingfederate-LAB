@@ -8,6 +8,9 @@ import FloatingDialog from "./FloatingDialog";
 // jsdom has no PointerEvent; a MouseEvent named pointer* carries clientX/Y and bubbles to React's listeners.
 const ptr = (el, type, x, y) => act(() => { el.dispatchEvent(new MouseEvent(type, { button: 0, clientX: x, clientY: y, bubbles: true, cancelable: true })); });
 const px = (v) => Number.parseFloat(v);
+// geometry is set as custom properties (--fd-x/-y/-w/-h) that floating-dialog.css turns into left/top/width/height
+const geo = (d) => ({ get left() { return d.style.getPropertyValue("--fd-x"); }, get top() { return d.style.getPropertyValue("--fd-y"); },
+  get width() { return d.style.getPropertyValue("--fd-w"); }, get height() { return d.style.getPropertyValue("--fd-h"); } });
 
 function fakeWindow(doc = document.implementation.createHTMLDocument("")) {
   Object.defineProperty(doc, "defaultView", { value: window });
@@ -74,9 +77,28 @@ describe("layout", () => {
   test("placement right only chooses where it opens; drag and keys still move it", () => {
     render(<FloatingDialog isOpen onClose={() => {}} title="P" placement="right" defaultWidth={400} defaultHeight={300}><p>b</p></FloatingDialog>);
     const d = screen.getByRole("dialog");
-    expect([px(d.style.left), px(d.style.top)]).toEqual([1280 - 400 - 8, 8]);
+    expect([px(geo(d).left), px(geo(d).top)]).toEqual([1280 - 400 - 8, 8]);
     fireEvent.keyDown(screen.getByTestId("fd-titlebar"), { key: "ArrowLeft", shiftKey: true });
-    expect(px(d.style.left)).toBe(1280 - 400 - 8 - 50);
+    expect(px(geo(d).left)).toBe(1280 - 400 - 8 - 50);
+  });
+
+  test("geometry is set as --fd-* custom properties, never as inline left/top/width/height (so the sheet can override it)", () => {
+    render(<FloatingDialog isOpen onClose={() => {}} title="P" defaultX={30} defaultY={40} defaultWidth={400} defaultHeight={300} zIndex={1200}
+      style={{ left: 5, top: 6, right: 7, bottom: 8, width: 9, height: 10, "--lane": "var(--accent)", maxWidth: "90vw" }}><p>b</p></FloatingDialog>);
+    const d = screen.getByRole("dialog");
+    expect([geo(d).left, geo(d).top, geo(d).width, geo(d).height]).toEqual(["30px", "40px", "400px", "300px"]);
+    for (const k of ["left", "top", "right", "bottom", "width", "height"]) expect(d.style[k], k).toBe("");
+    expect(d.style.getPropertyValue("--lane")).toBe("var(--accent)"); // a caller's other styles still apply
+    expect(d.style.maxWidth).toBe("90vw");
+    expect(d.style.zIndex).toBe("1200");
+    expect(d.getAttribute("data-autoheight")).toBeNull();
+  });
+
+  test("defaultHeight={null} fits the content: --fd-h is auto and data-autoheight is set", () => {
+    render(<FloatingDialog isOpen onClose={() => {}} title="P" defaultHeight={null}><p>b</p></FloatingDialog>);
+    const d = screen.getByRole("dialog");
+    expect(geo(d).height).toBe("auto");
+    expect(d.getAttribute("data-autoheight")).toBe("true");
   });
 
   test("nothing renders when closed", () => {
@@ -93,15 +115,15 @@ describe("drag and resize", () => {
     const bar = screen.getByTestId("fd-titlebar");
     ptr(screen.getByText("first"), "pointerdown", 110, 110);
     ptr(screen.getByText("first"), "pointermove", 200, 200);
-    expect(d.style.left).toBe("100px");
+    expect(geo(d).left).toBe("100px");
     ptr(screen.getByRole("button", { name: "Pop out to a new window" }), "pointerdown", 110, 110);
     ptr(bar, "pointermove", 200, 200);
-    expect(d.style.left).toBe("100px");
+    expect(geo(d).left).toBe("100px");
     ptr(bar, "pointerdown", 110, 110);
     ptr(bar, "pointermove", 160, 150);
     ptr(bar, "pointerup", 160, 150);
-    expect(d.style.left).toBe("150px");
-    expect(d.style.top).toBe("140px");
+    expect(geo(d).left).toBe("150px");
+    expect(geo(d).top).toBe("140px");
   });
 
   test("resize grows from the east edge and stops at the minimum width and height", () => {
@@ -111,9 +133,9 @@ describe("drag and resize", () => {
     const se = d.querySelector(".fd-handle-se");
     ptr(se, "pointerdown", 500, 400);
     ptr(document, "pointermove", 560, 450);
-    expect([px(d.style.width), px(d.style.height)]).toEqual([460, 350]);
+    expect([px(geo(d).width), px(geo(d).height)]).toEqual([460, 350]);
     ptr(document, "pointermove", -900, -900);
-    expect([px(d.style.width), px(d.style.height)]).toEqual([300, 200]);
+    expect([px(geo(d).width), px(geo(d).height)]).toEqual([300, 200]);
     ptr(document, "pointerup", 0, 0);
   });
 
@@ -124,8 +146,8 @@ describe("drag and resize", () => {
     ptr(d.querySelector(".fd-handle-nw"), "pointerdown", 100, 100);
     ptr(document, "pointermove", -500, -500);
     ptr(document, "pointerup", -500, -500);
-    expect([px(d.style.left), px(d.style.top)]).toEqual([0, 0]);
-    expect([px(d.style.width), px(d.style.height)]).toEqual([500, 400]);
+    expect([px(geo(d).left), px(geo(d).top)]).toEqual([0, 0]);
+    expect([px(geo(d).width), px(geo(d).height)]).toEqual([500, 400]);
   });
 });
 
@@ -137,9 +159,9 @@ describe("keyboard", () => {
     const bar = screen.getByTestId("fd-titlebar");
     fireEvent.keyDown(bar, { key: "ArrowRight" });
     fireEvent.keyDown(bar, { key: "ArrowDown", shiftKey: true });
-    expect([px(d.style.left), px(d.style.top)]).toEqual([110, 150]);
+    expect([px(geo(d).left), px(geo(d).top)]).toEqual([110, 150]);
     for (let i = 0; i < 40; i += 1) fireEvent.keyDown(bar, { key: "ArrowLeft", shiftKey: true });
-    expect(px(d.style.left)).toBe(8);
+    expect(px(geo(d).left)).toBe(8);
   });
 
   test("Alt + arrow keys resize, down to the minimum", () => {
@@ -149,9 +171,9 @@ describe("keyboard", () => {
     const bar = screen.getByTestId("fd-titlebar");
     fireEvent.keyDown(bar, { key: "ArrowRight", altKey: true });
     fireEvent.keyDown(bar, { key: "ArrowDown", altKey: true, shiftKey: true });
-    expect([px(d.style.width), px(d.style.height)]).toEqual([410, 350]);
+    expect([px(geo(d).width), px(geo(d).height)]).toEqual([410, 350]);
     for (let i = 0; i < 5; i += 1) fireEvent.keyDown(bar, { key: "ArrowLeft", altKey: true });
-    expect(px(d.style.width)).toBe(380);
+    expect(px(geo(d).width)).toBe(380);
   });
 
   test("Alt + arrow keys cannot grow it past the right or bottom edge of the window", () => {
@@ -163,14 +185,14 @@ describe("keyboard", () => {
       fireEvent.keyDown(bar, { key: "ArrowRight", altKey: true, shiftKey: true });
       fireEvent.keyDown(bar, { key: "ArrowDown", altKey: true, shiftKey: true });
     }
-    expect([px(d.style.width), px(d.style.height)]).toEqual([1280 - 100 - 8, 900 - 100 - 8]);
+    expect([px(geo(d).width), px(geo(d).height)]).toEqual([1280 - 100 - 8, 900 - 100 - 8]);
   });
 
   test("arrow keys on a button inside the title bar do not move the dialog", () => {
     render(<Harness />);
     fireEvent.click(screen.getByText("opener"));
     fireEvent.keyDown(screen.getByRole("button", { name: "Pop out to a new window" }), { key: "ArrowRight" });
-    expect(screen.getByRole("dialog").style.left).toBe("100px");
+    expect(geo(screen.getByRole("dialog")).left).toBe("100px");
   });
 });
 
@@ -252,7 +274,7 @@ describe("persistence", () => {
     unmount();
     render(<Harness props={{ storageKey: "fd.test" }} />);
     fireEvent.click(screen.getByText("opener"));
-    expect(px(screen.getByRole("dialog").style.left)).toBe(1280 - 400 - 8);
+    expect(px(geo(screen.getByRole("dialog")).left)).toBe(1280 - 400 - 8);
   });
 
   test("a restored position is clamped on every side, and a restored size to min..window", () => {
@@ -261,7 +283,7 @@ describe("persistence", () => {
       const r = render(<Harness props={{ storageKey: "fd.c", minWidth: 300, minHeight: 200 }} />);
       fireEvent.click(screen.getByText("opener"));
       const d = screen.getByRole("dialog");
-      const out = [px(d.style.left), px(d.style.top), px(d.style.width), px(d.style.height)];
+      const out = [px(geo(d).left), px(geo(d).top), px(geo(d).width), px(geo(d).height)];
       r.unmount();
       return out;
     };
@@ -280,7 +302,7 @@ describe("persistence", () => {
       render(<Harness props={{ storageKey: "fd.test" }} />);
       fireEvent.click(screen.getByText("opener"));
       fireEvent.keyDown(screen.getByTestId("fd-titlebar"), { key: "ArrowRight" });
-      expect(screen.getByRole("dialog").style.left).toBe("110px");
+      expect(geo(screen.getByRole("dialog")).left).toBe("110px");
     } finally {
       if (own) Object.defineProperty(window, "localStorage", own); else delete window.localStorage;
     }
@@ -300,7 +322,7 @@ describe("narrow screens", () => {
     ptr(bar, "pointerdown", 110, 110);
     ptr(bar, "pointermove", 200, 200);
     fireEvent.keyDown(bar, { key: "ArrowRight" });
-    expect(d.style.left).toBe("100px");
+    expect(geo(d).left).toBe("100px");
   });
 });
 

@@ -1,6 +1,6 @@
-# vendored byte for byte from curtismu7/AI-DEMO-Standalone shared/floating-dialog at 516d340 (main); re-vendor, do not edit.
-106b6d1b15f9ce5991bdbd290e1e6a94292643a3e878a77f1536468e284f1850  FloatingDialog.jsx
-10735480f5565bd434a08e721f4a3af24e7e96beb38ca1acb9dd21c21e56a576  floating-dialog.css
-317d31a5d4c81ebac77ee59bb74d06da622f68509b06fdb59df1d126b467acbc  floating-dialog.test.jsx
+# vendored byte for byte from curtismu7/AI-DEMO-Standalone shared/floating-dialog at fb9381f (main); re-vendor, do not edit.
+7f574accc623f04c535a7e82f8df7e71bd78547fa38922542642e7d37e45c62b  FloatingDialog.jsx
+0ed45207b751204a8cd3b9d1cf912a011654eacd819a3f43ee003a64276809c3  floating-dialog.css
+19e01d754ab405da0cd04eaf7bfaf1831497af7cc40c2ea1b069dd0751341820  floating-dialog.test.jsx
 3167943164704e26e5ee91bbd9f77e3c1f6872c22c115c9ce9f94f1132a886ed  geometry.js
 0fb526558f84440a5e49b042f826c099c64ebc100523b94726f04ddde03838b2  useFloatingPanel.js
