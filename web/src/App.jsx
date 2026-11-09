@@ -7,6 +7,17 @@ import Playground from './views/Playground.jsx';
 import WorkspaceSwitch from './views/WorkspaceSwitch.jsx';
 import ShelfLink from "./components/ShelfLink.jsx";
 import { currentWorkspace } from "./api.js";
+import ReturnLink from "./return-link/ReturnLink.jsx";
+import { readReturnContext } from "./return-link/returnTargets.js";
+import { cardFor, verticalFor } from "./handoffMap.js";
+
+// Opened from Customer Agent LAB: on load, with no route in the hash yet, open the mapped card (handoffMap.js). The hash is written
+// back so the router and the address bar agree; the query (and with it the strip) stays.
+function initialRoute(handoff) {
+  const card = !window.location.hash.replace(/^#\/?/, '') && cardFor(handoff);
+  if (card) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/run/${card}`);
+  return parseRoute(window.location.hash);
+}
 
 // Hash routes: #/ (shelf), #/run/<card>, #/settings[/<section.field>], #/playground.
 export function parseRoute(hash) {
@@ -38,12 +49,13 @@ const read = (key, fallback) => { try { return window.localStorage.getItem(key) 
 const write = (key, value) => { try { window.localStorage.setItem(key, value); } catch { /* storage may be blocked */ } };
 
 export default function App() {
-  const [route, setRoute] = useState(() => parseRoute(window.location.hash));
+  const [handoff] = useState(() => readReturnContext(window.location.search));
+  const [route, setRoute] = useState(() => initialRoute(handoff));
   const [config, setConfig] = useState(null);
   const [cards, setCards] = useState([]);
   const [me, setMe] = useState({ signedIn: false });
   const [verticals, setVerticals] = useState([]);
-  const [vertical, setVertical] = useState(() => read('pflab-vertical', ''));
+  const [vertical, setVertical] = useState(() => verticalFor(handoff) || read('pflab-vertical', ''));
   const [story, setStory] = useState(null);
   const [theme, setTheme] = useState(() => (THEMES.includes(read('pflab-theme', 'auto')) ? read('pflab-theme', 'auto') : 'auto'));
   const [presenter, setPresenter] = useState(() => new URLSearchParams(window.location.search).get('present') === '1');
@@ -130,6 +142,7 @@ export default function App() {
       <div className="banner" data-mode={mode === 'mock' ? 'mock' : (config?.issuer ? 'live' : 'off')} role="status" data-testid="banner">
         <span className="mode-dot" aria-hidden="true" /><span className="mode-badge">{mode === 'mock' ? 'MOCK' : 'LIVE'}</span>{bannerText(config?.issuer, mode)}
       </div>
+      <ReturnLink app="pingfederate" />
       <header className="top">
         <div className="brand">
           <img className="brand__logo" src="/ping-logo.png" alt="Ping Identity" width="40" height="40" />
@@ -145,6 +158,7 @@ export default function App() {
           <a href="#/settings" aria-current={route.view === 'settings' ? 'page' : undefined}>Settings</a>
         </nav>
         <div className="prefs">
+          <ReturnLink app="pingfederate" variant="header" />
           <div className="mode-toggle" role="group" aria-label="Mock or live PingFederate">
             <span className="mode-toggle__label">PingFederate</span>
             {[

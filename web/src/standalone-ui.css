@@ -294,6 +294,7 @@ button[aria-pressed="true"] {
   --lane-mcp: #1baf7a; --lane-gateway: #5fc8a1; --lane-privilege: #13805a; --lane-credentials: #8fd7bc;
   --lane-idp: #eda100; --lane-mcp-as: #f2bd4d; --lane-authorize: #f2bd4d;
   --lane-bff: #e87ba4; --lane-registry: #efa3c0; --lane-lab: var(--muted); --lane-neutral: var(--muted);
+  --lane-llm: color-mix(in oklab, #eb6834 60%, white); --lane-api: color-mix(in oklab, #e87ba4 55%, white); --lane-database: color-mix(in oklab, #e87ba4 30%, white);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -302,6 +303,7 @@ button[aria-pressed="true"] {
     --lane-mcp: #2ed9a3; --lane-gateway: #6ee3bd; --lane-privilege: #3fcf94; --lane-credentials: #97ead0;
     --lane-idp: #ffa500; --lane-mcp-as: #ffc04d; --lane-authorize: #ffc04d;
     --lane-bff: #ff5599; --lane-registry: #ff88bb;
+    --lane-llm: color-mix(in oklab, #ff6b4a 80%, white); --lane-api: color-mix(in oklab, #ff5599 75%, white); --lane-database: color-mix(in oklab, #ff5599 55%, white);
   }
 }
 :root[data-theme="dark"] {
@@ -310,4 +312,5 @@ button[aria-pressed="true"] {
   --lane-mcp: #2ed9a3; --lane-gateway: #6ee3bd; --lane-privilege: #3fcf94; --lane-credentials: #97ead0;
   --lane-idp: #ffa500; --lane-mcp-as: #ffc04d; --lane-authorize: #ffc04d;
   --lane-bff: #ff5599; --lane-registry: #ff88bb;
+  --lane-llm: color-mix(in oklab, #ff6b4a 80%, white); --lane-api: color-mix(in oklab, #ff5599 75%, white); --lane-database: color-mix(in oklab, #ff5599 55%, white);
 }

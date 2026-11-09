@@ -493,6 +493,9 @@ describe('no redirect, no other host', () => {
     walk(here);
     for (const f of files) {
       const text = fs.readFileSync(f, 'utf8');
+      // The vendored return-link (Back to Customer Agent LAB) is the one same-tab navigation, only to its fixed list of targets
+      // (return-link/ReturnLink.test.jsx and returnLink.app.test.jsx prove that); it calls fetch nowhere.
+      if (f.endsWith(path.join('return-link', 'ReturnLink.jsx'))) { expect(text.match(/location\.assign\(link\.href\)/g)).toHaveLength(1); expect(text).not.toMatch(/fetch\(/); continue; }
       expect([f, /location\.(href|assign|replace)\s*[=(]|window\.open\(|location\s*=/.test(text)]).toEqual([f, false]);
       expect([f, /fetch\(\s*['"`]https?:/.test(text)]).toEqual([f, false]);
     }
