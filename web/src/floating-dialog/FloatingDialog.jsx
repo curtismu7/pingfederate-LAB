@@ -295,8 +295,15 @@ export default function FloatingDialog({
     else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
   };
 
-  // placement only chooses where it opens (initialPosition); after that position and size rule, so drag and keys work
-  const panelStyle = { ...style, left: pos.x, top: pos.y, width: size.w, height: size.h == null ? "auto" : size.h, zIndex };
+  // placement only chooses where it opens (initialPosition); after that position and size rule, so drag and keys work.
+  // Geometry goes out as custom properties that floating-dialog.css reads, so the narrow-screen sheet can override it
+  // without !important. A caller's own left/top/right/bottom/width/height are dropped: the dialog owns its geometry.
+  const { left: _l, top: _t, right: _r, bottom: _b, width: _w, height: _h, ...callerStyle } = style || {};
+  const panelStyle = {
+    ...callerStyle,
+    "--fd-x": `${pos.x}px`, "--fd-y": `${pos.y}px`, "--fd-w": `${size.w}px`, "--fd-h": size.h == null ? "auto" : `${size.h}px`,
+    zIndex,
+  };
   const hintId = `${id}-hint`;
 
   return createPortal(

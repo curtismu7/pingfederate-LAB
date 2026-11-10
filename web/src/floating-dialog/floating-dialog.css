@@ -19,6 +19,8 @@
   font-family: var(--font-primary);
   font-size: 14px;
 }
+/* position and size come from FloatingDialog as custom properties (--fd-h is auto until resized) */
+.fd-panel[data-placement] { left: var(--fd-x); top: var(--fd-y); width: var(--fd-w); height: var(--fd-h); }
 .fd-panel[data-autoheight="true"] { max-height: calc(100vh - 16px); }
 .fd-panel:focus { outline: none; }
 .fd-panel:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -98,16 +100,17 @@
 .fd-popout-document { margin: 0; background: var(--surface); color: var(--text); }
 .fd-popout-layout { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* narrow screens: a full-width sheet from the bottom; position and size from drag / resize do not apply */
+/* narrow screens: a full-width sheet from the bottom; position and size from drag / resize do not apply. Same selector
+   as the geometry rule above and later in the file, so it wins with plain declarations. */
 @media (max-width: 600px) {
   .fd-panel[data-placement] {
-    left: 0 !important;
-    right: 0 !important;
-    top: auto !important;
+    left: 0;
+    right: 0;
+    top: auto;
     bottom: 0;
-    width: 100% !important;
+    width: 100%;
     max-width: 100%;
-    height: auto !important;
+    height: auto;
     max-height: 85vh;
     border-radius: 10px 10px 0 0;
   }
