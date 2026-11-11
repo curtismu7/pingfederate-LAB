@@ -73,6 +73,17 @@ describe('hand-off from Customer Agent LAB', () => {
     }
   });
 
+  it('?from=ai-demo-standalone: strip named for AI Demo Standalone, Back to its fixed proxy path', async () => {
+    mockServer(BASE_ROUTES());
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, pathname: '/pingfederate-lab/', hash: '', search: '?from=ai-demo-standalone&uc=UC12', assign });
+    render(<App />);
+    expect(screen.getByRole('note', { name: 'Opened from AI Demo Standalone' })).toHaveTextContent('UC12');
+    for (const b of screen.getAllByRole('button', { name: /Back to AI Demo Standalone/ })) fireEvent.click(b);
+    expect(assign.mock.calls).toEqual([['/ai-demo-standalone/?returned=pingfederate&uc=UC12'], ['/ai-demo-standalone/?returned=pingfederate&uc=UC12']]);
+    await waitFor(() => expect(document.title).toMatch(/^Shelf/));
+  });
+
   it('the vendored files match return-link.sha256, which names the parent commit', () => {
     const dir = path.join(here, 'return-link');
     const text = fs.readFileSync(path.join(dir, 'return-link.sha256'), 'utf8');
