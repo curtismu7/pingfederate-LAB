@@ -17,6 +17,11 @@ export const RETURN_TARGETS = Object.freeze({
     proxyPath: '/customer-agent/',
     directUrl: 'http://127.0.0.1:5603/',
   }),
+  'ai-demo-standalone': Object.freeze({
+    label: 'AI Demo Standalone',
+    proxyPath: '/ai-demo-standalone/',
+    directUrl: 'http://127.0.0.1:7810/',
+  }),
 });
 
 const ID = /^[A-Za-z0-9.-]{1,40}$/;
