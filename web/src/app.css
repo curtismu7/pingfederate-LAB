@@ -35,7 +35,8 @@ legend { font-weight: 700; padding: 0 6px; }
 .banner[data-mode="off"] .mode-dot { background: var(--muted); animation: none; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--surface-2); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .mode-badge { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.06em; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; }
-.top { display: grid; grid-template-columns: 1fr auto auto; gap: 10px 20px; align-items: center; padding: 16px 0; border-bottom: 2px solid var(--text); max-width: 1240px; width: 100%; margin: 0 auto; position: relative; }
+.top { display: grid; grid-template-columns: 1fr auto auto; gap: 10px 20px; align-items: center; padding: 12px 16px 8px; border-bottom: none; background: var(--box-dark); color: var(--on-box); max-width: none; width: 100%; margin: 0 auto; position: relative; }
+.top > :focus-visible { outline: 3px solid var(--on-box); outline-offset: 2px; }
 .brand { min-width: 0; display: flex; gap: 12px; align-items: center; }
 .brand__logo { width: 40px; height: 40px; flex: 0 0 auto; }
 .brand h1 { margin: 0; font-size: 1.6em; }
