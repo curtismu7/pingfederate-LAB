@@ -151,7 +151,6 @@ export default function App() {
           <img className="brand__logo" src="/ping-logo.png" alt="Ping Identity" width="40" height="40" />
           <div>
             <h1><a href="#/">{name}</a></h1>
-        <ShelfLink headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
             {config?.customer?.tagline && <p className="tagline">{config.customer.tagline}</p>}
           </div>
         </div>
