@@ -5,6 +5,7 @@ import RunView from './views/RunView.jsx';
 import Settings from './views/Settings.jsx';
 import Playground from './views/Playground.jsx';
 import WorkspaceSwitch from './views/WorkspaceSwitch.jsx';
+import TopMenu, { applyFontSize } from './top-menu/TopMenu.jsx';
 import ShelfLink from "./components/ShelfLink.jsx";
 import { currentWorkspace } from "./api.js";
 import ReturnLink from "./return-link/ReturnLink.jsx";
@@ -59,6 +60,8 @@ export default function App() {
   const [story, setStory] = useState(null);
   const [theme, setTheme] = useState(() => (THEMES.includes(read('pflab-theme', 'auto')) ? read('pflab-theme', 'auto') : 'auto'));
   const [presenter, setPresenter] = useState(() => new URLSearchParams(window.location.search).get('present') === '1');
+  const [fontStep, setFontStep] = useState(() => (['S', 'M', 'L'].includes(read('pflab.font', 'M')) ? read('pflab.font', 'M') : 'M'));
+  useEffect(() => { applyFontSize(fontStep); write('pflab.font', fontStep); }, [fontStep]);
   const [loadError, setLoadError] = useState(null);
   // Set by the header's Sign in: the sign-in card starts its flow as soon as it shows, instead of waiting for Run.
   const [signInRequested, setSignInRequested] = useState(false);
@@ -159,33 +162,19 @@ export default function App() {
         </nav>
         <div className="prefs">
           <ReturnLink app="pingfederate" variant="header" />
-          <div className="mode-toggle" role="group" aria-label="Mock or live PingFederate">
-            <span className="mode-toggle__label">PingFederate</span>
-            {[
-              ['mock', 'Mock', false],
-              ['live', 'Real', true],
-            ].map(([m, label, isReal]) => {
-              const off = switching || (isReal && realAvailable === false);
-              const why = isReal && realAvailable === false && modeInfo?.realReason ? modeInfo.realReason : undefined;
-              return (
-                <button key={m} type="button" className="mode-toggle__button" aria-pressed={mode === m} disabled={off} title={why} onClick={() => setMode(m)} data-testid={`mode-${isReal ? 'real' : 'mock'}`}>
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          <WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />
-          <label className="inline">Theme
-            <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-              {THEMES.map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
-            </select>
-          </label>
-          <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>Presenter</button>
-        </div>
-        <div className="who">
-          {me.signedIn
-            ? <><span>Signed in as <strong data-testid="who">{me.user?.subject}</strong></span><button type="button" onClick={signOut}>Sign out</button></>
-            : <button type="button" className="primary" onClick={signIn}>Sign in</button>}
+          <TopMenu
+            mode={{ value: mode === 'live' ? 'real' : mode, onChange: (v) => setMode(v === 'real' ? 'live' : v), realAvailable, realHint: modeInfo?.realReason }}
+            theme={{ value: theme, onChange: setTheme }}
+            fontSize={{ value: fontStep, onChange: setFontStep }}
+            present={{ active: presenter, onToggle: () => setPresenter((p) => !p) }}
+            help={{ href: 'https://github.com/curtismu7/pingfederate-LAB#readme' }}
+            version={modeInfo?.version || null}
+            showSignIn={mode === 'live'}
+            signedIn={{ subject: me.signedIn ? me.user?.subject : null, onSignIn: signIn, onSignOut: signOut }}
+            extra={<WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />}
+          >
+            <ShelfLink headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
+          </TopMenu>
         </div>
       </header>
       <main id="main" tabIndex={-1}>

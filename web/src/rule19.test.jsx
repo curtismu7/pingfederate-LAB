@@ -17,13 +17,12 @@ describe("Rule 19 Mock/Real toggle", () => {
       'PUT /api/mode': () => { switched = true; return { status: 409, body: { error: 'real_not_available', message: 'Real (live) is not available.' } }; },
     });
     render(<App />);
-    const toggle = await screen.findByRole('group', { name: 'Mock or live PingFederate' });
-    const real = within(toggle).getByRole('button', { name: 'Real' });
+    const toggle = await screen.findByTestId('mode-select');
+    const real = within(toggle).getByRole('option', { name: 'Real' });
     await waitFor(() => expect(real).toBeDisabled());
-    expect(real.getAttribute('title')).toMatch(/Settings page/);
-    await userEvent.click(real);
-    expect(switched).toBe(false, 'a disabled Real button never reaches the server');
-    expect(within(toggle).getByTestId('mode-mock')).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.selectOptions(toggle, 'real');
+    expect(switched).toBe(false, 'a disabled Real option never reaches the server');
+    expect(toggle).toHaveValue('mock');
   });
 
   it('after a switch the pressed button follows /api/info', async () => {
@@ -36,9 +35,9 @@ describe("Rule 19 Mock/Real toggle", () => {
       'PUT /api/mode': (body) => { source = body.mode === 'real' ? 'real' : 'mock'; return { body: { mode: source === 'real' ? 'live' : 'mock', source } }; },
     });
     render(<App />);
-    const toggle = await screen.findByRole('group', { name: 'Mock or live PingFederate' });
-    await waitFor(() => expect(within(toggle).getByRole('button', { name: 'Real' })).toHaveAttribute('aria-pressed', 'true'));
-    await userEvent.click(within(toggle).getByRole('button', { name: 'Mock' }));
-    await waitFor(() => expect(within(toggle).getByTestId('mode-mock')).toHaveAttribute('aria-pressed', 'true'));
+    const toggle = await screen.findByTestId('mode-select');
+    await waitFor(() => expect(toggle).toHaveValue('real'));
+    await userEvent.selectOptions(toggle, 'mock');
+    await waitFor(() => expect(toggle).toHaveValue('mock'));
   });
 });

@@ -30,20 +30,20 @@ describe('banner (rule 2)', () => {
     });
     render(<App />);
     expect(await screen.findByTestId('banner')).toHaveTextContent('MOCKMock: a simulated PingFederate inside this lab. Nothing leaves this machine.');
-    const toggle = screen.getByRole('group', { name: 'Mock or live PingFederate' });
-    expect(within(toggle).getByRole('button', { name: 'Mock' })).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(within(toggle).getByRole('button', { name: 'Real' }));
+    const toggle = screen.getByTestId('mode-select');
+    expect(toggle).toHaveValue('mock');
+    await userEvent.selectOptions(toggle, 'real');
     await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('Live: every call goes to your PingFederate at https://pf.example.'));
     expect(server.calls.find((c) => c.method === 'PUT' && c.path === '/api/mode').body).toEqual({ mode: 'real' });
-    expect(within(toggle).getByRole('button', { name: 'Real' })).toHaveAttribute('aria-pressed', 'true');
+    expect(toggle).toHaveValue('real');
     await act(async () => { go('#/settings'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
-    expect(screen.getByRole('group', { name: 'Mock or live PingFederate' })).toBeInTheDocument();
+    expect(screen.getByTestId('mode-select')).toBeInTheDocument();
   });
   it('is on every view, presenter mode included', async () => {
     mockServer(BASE_ROUTES(null));
     render(<App />);
     expect(await screen.findByTestId('banner')).toHaveTextContent('Not connected: set your PingFederate in Settings.');
-    await userEvent.click(screen.getByRole('button', { name: 'Presenter' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Present (P)' }));
     expect(screen.getByTestId('banner')).toBeInTheDocument();
     await act(async () => { go('#/playground'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
     expect(screen.getByTestId('banner')).toBeInTheDocument();

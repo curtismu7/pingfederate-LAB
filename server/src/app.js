@@ -229,7 +229,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
   // Rule 19: what the Mock/Real toggle needs.
   app.get('/api/info', wrap((req) => {
     const v = modeView(req);
-    return { source: v.source, realAvailable: v.realAvailable, realReason: v.realReason, mode: v.mode, issuer: v.issuer };
+    return { source: v.source, realAvailable: v.realAvailable, realReason: v.realReason, mode: v.mode, issuer: v.issuer, version: (() => { try { return JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version || null; } catch { return null; } })() };
   }));
   app.get('/api/stories', wrap(() => ({ verticals: verticalList(), default: customer.config.vertical })));
   app.get('/api/stories/:vertical', wrap((req) => {

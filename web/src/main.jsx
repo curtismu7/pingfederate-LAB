@@ -11,6 +11,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/600.css';
 // The family's shared stylesheet first (tokens, controls, dark mode), then the lab's own layout.
 import './standalone-ui.css';
+import './top-menu/top-menu.css';
 import App from './App.jsx';
 import './app.css';
 
