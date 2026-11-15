@@ -14,7 +14,7 @@ h4 { margin: 20px 0 6px; font-size: 1em; text-transform: uppercase; letter-spaci
 h5, h6 { margin: 12px 0 4px; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 code, pre, .mono { font-size: 0.86em; }
 .wrap, code { overflow-wrap: anywhere; word-break: break-word; }
-pre { background: var(--surface-2); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; margin: 4px 0; }
+pre { background: var(--surface-2); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0; }
 .hint { color: var(--muted); font-size: 0.9em; }
 strong, b { font-weight: 700; }
 

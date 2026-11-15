@@ -5,12 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { render, screen, waitFor, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App, { bannerText, parseRoute } from './App.jsx';
+import { setJsonView } from './components/JsonPane.jsx';
 import { mockServer, BASE_ROUTES, CARDS, hop } from './testApi.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const go = (hash) => { window.location.hash = hash; };
 
-beforeEach(() => { go('#/'); });
+beforeEach(() => { go('#/'); setJsonView('form'); }); // the Form | JSON choice is shared module state
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('banner (rule 2)', () => {
@@ -486,8 +487,15 @@ describe('playground explainer, Token tab and ID-JAG note', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Execute step 2: Exchange 2: agent token + tool-service actor' }));
     await userEvent.click(screen.getByRole('tab', { name: 'Token' }));
     expect(await within(panel).findByText(/From step 2: Exchange 2/)).toBeInTheDocument();
-    for (const text of ['mcp:invoke', 'mcp.example', 'alice', '2030-01-01T00:00:00.000Z']) expect(within(panel).getByText(text)).toBeInTheDocument();
+    // The facts card (scopes, aud, sub, exp) ...
+    const facts = within(panel).getByLabelText(/scopes, audience, subject, expiry/);
+    for (const text of ['mcp:invoke', 'mcp.example', 'alice', '2030-01-01T00:00:00.000Z']) expect(within(facts).getByText(text)).toBeInTheDocument();
     expect(within(panel).getByText(/fake\.mock\.token/)).toBeInTheDocument();
+    // ... and the full token view: the claims in a JsonPane, as a form first, then as JSON text.
+    const claims = within(panel).getByRole('group', { name: 'Token claims' });
+    expect(within(claims).getByText('mcp:invoke')).toBeInTheDocument();
+    await userEvent.click(within(within(panel).getByRole('group', { name: 'Token claims view' })).getByRole('button', { name: 'JSON' }));
+    expect(within(panel).getByLabelText('Token claims').textContent).toContain('"scope": "mcp:invoke"');
   });
 
   it('Clear on DCR asks the lab to discard a leftover mock client; other flows only clear the page', async () => {
