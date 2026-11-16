@@ -30,6 +30,7 @@ legend { font-weight: 700; padding: 0 6px; }
 
 /* Banner (shared .banner). */
 .banner { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; }
+.tagline { margin: 10px 0 0; color: var(--muted); max-width: 75ch; } /* the customer tagline, below the banner in <main> */
 .mode-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; background: var(--status-ok); animation: pulse 2.4s infinite; }
 .banner[data-mode="mock"] .mode-dot { background: var(--accent); }
 .banner[data-mode="off"] .mode-dot { background: var(--muted); animation: none; }
@@ -39,15 +40,12 @@ legend { font-weight: 700; padding: 0 6px; }
    cancels the body gutter); wraps at 600px. position: relative anchors the TopMenu sign-in slot. */
 .shell-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 0 -16px; padding: 10px 20px;
   background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; }
-.shell-brand { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; letter-spacing: 0.02em; }
-.shell-brand__text { min-width: 0; }
-.shell-brand__name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.shell-brand { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; font-weight: 700; letter-spacing: 0.02em; }
 .shell-logo { width: 30px; height: 30px; flex: 0 0 auto; }
 .shell-bar h1 { margin: 0; color: var(--on-box); font-size: 1.3em; }
 .shell-bar h1 a { color: inherit; text-decoration: none; }
 .shell-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75em var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .shell-badge--real { background: var(--surface-2); color: var(--status-warn); border-color: var(--status-warn); }
-.shell-tagline { margin: 2px 0 0; color: var(--on-box); font-weight: 400; font-size: 0.85em; letter-spacing: 0; }
 .shell-nav { display: flex; gap: 4px; flex: 1 1 auto; } /* one row of pills; when the bar is full the TopMenu wraps below, not the nav */
 .shell-nav a { padding: 5px 12px; border-radius: 999px; border: 1px solid transparent; color: var(--on-box); text-decoration: none; font-size: 0.9em; font-weight: 500; white-space: nowrap; }
 .shell-nav a:hover { border-color: var(--on-box); }
