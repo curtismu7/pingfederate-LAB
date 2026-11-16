@@ -7,6 +7,7 @@ import Playground from './views/Playground.jsx';
 import WorkspaceSwitch from './views/WorkspaceSwitch.jsx';
 import TopMenu, { applyFontSize } from './top-menu/TopMenu.jsx';
 import ShelfLink from "./components/ShelfLink.jsx";
+import VerifyMark from "./components/VerifyMark.jsx";
 import { currentWorkspace } from "./api.js";
 import ReturnLink from "./return-link/ReturnLink.jsx";
 import { readReturnContext } from "./return-link/returnTargets.js";
@@ -173,6 +174,7 @@ export default function App() {
             extra={<WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />}
           >
             <ShelfLink headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
+            <VerifyMark id="pingfederate-lab" headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
           </TopMenu>
         </div>
       </header>
