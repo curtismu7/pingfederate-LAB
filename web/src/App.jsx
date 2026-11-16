@@ -143,42 +143,44 @@ export default function App() {
     <div className={`app${presenter ? ' presenter' : ''}`}>
       {/* The skip link never changes the hash: the router reads the hash, so "#main" would leave the current view. */}
       <a className="skip" href="#main" onClick={skipToMain}>Skip to content</a>
-      <div className="banner" data-mode={mode === 'mock' ? 'mock' : (config?.issuer ? 'live' : 'off')} role="status" data-testid="banner">
-        <span className="mode-dot" aria-hidden="true" /><span className="mode-badge">{mode === 'mock' ? 'MOCK' : 'LIVE'}</span>{bannerText(config?.issuer, mode)}
-      </div>
-      <ReturnLink app="pingfederate" />
-      <header className="top">
-        <div className="brand">
-          <img className="brand__logo" src="/ping-logo.png" alt="Ping Identity" width="40" height="40" />
-          <div>
-            <h1><a href="#/">{name}</a></h1>
-            {config?.customer?.tagline && <p className="tagline">{config.customer.tagline}</p>}
+      <header className="shell-bar">
+        <div className="shell-brand">
+          <img className="shell-logo" src="/ping-logo.png" alt="Ping Identity" width="30" height="30" />
+          <div className="shell-brand__text">
+            <div className="shell-brand__name">
+              <h1><a href="#/">{name}</a></h1>
+              <span className={`shell-badge${mode === 'mock' ? '' : ' shell-badge--real'}`} data-testid="mode-badge">{mode === 'mock' ? 'Mock' : 'Real'}</span>
+            </div>
+            {config?.customer?.tagline && <p className="shell-tagline">{config.customer.tagline}</p>}
           </div>
         </div>
-        <nav className="nav" aria-label="Main">
-          <a href="#/" aria-current={route.view === 'shelf' ? 'page' : undefined}>Shelf</a>
+        <nav className="shell-nav" aria-label="Main">
+          {/* A card's run view opens from the shelf, so the Shelf pill stays current there. */}
+          <a href="#/" aria-current={route.view === 'shelf' || route.view === 'run' ? 'page' : undefined}>Shelf</a>
           <a href="#/playground" aria-current={route.view === 'playground' ? 'page' : undefined}>Playground</a>
           <a href="#/settings" aria-current={route.view === 'settings' ? 'page' : undefined}>Settings</a>
         </nav>
-        <div className="prefs">
+        <TopMenu
+          mode={{ value: mode === 'live' ? 'real' : mode, onChange: (v) => setMode(v === 'real' ? 'live' : v), realAvailable, realHint: modeInfo?.realReason }}
+          theme={{ value: theme, onChange: setTheme }}
+          fontSize={{ value: fontStep, onChange: setFontStep }}
+          present={{ active: presenter, onToggle: () => setPresenter((p) => !p) }}
+          help={{ href: 'https://github.com/curtismu7/pingfederate-LAB#readme' }}
+          version={modeInfo?.version || null}
+          showSignIn={mode === 'live'}
+          signedIn={{ subject: me.signedIn ? me.user?.subject : null, onSignIn: signIn, onSignOut: signOut }}
+          extra={<WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />}
+        >
           <ReturnLink app="pingfederate" variant="header" />
-          <TopMenu
-            mode={{ value: mode === 'live' ? 'real' : mode, onChange: (v) => setMode(v === 'real' ? 'live' : v), realAvailable, realHint: modeInfo?.realReason }}
-            theme={{ value: theme, onChange: setTheme }}
-            fontSize={{ value: fontStep, onChange: setFontStep }}
-            present={{ active: presenter, onToggle: () => setPresenter((p) => !p) }}
-            help={{ href: 'https://github.com/curtismu7/pingfederate-LAB#readme' }}
-            version={modeInfo?.version || null}
-            showSignIn={mode === 'live'}
-            signedIn={{ subject: me.signedIn ? me.user?.subject : null, onSignIn: signIn, onSignOut: signOut }}
-            extra={<WorkspaceSwitch current={config?.workspace || 'default'} known={workspaces} onChoose={(id) => { chooseWorkspace(id); window.location.reload(); }} />}
-          >
-            <ShelfLink headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
-            <VerifyMark id="pingfederate-lab" headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
-          </TopMenu>
-        </div>
+          <ShelfLink headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
+          <VerifyMark id="pingfederate-lab" headers={() => ({ "x-lab-workspace": currentWorkspace() })} />
+        </TopMenu>
       </header>
       <main id="main" tabIndex={-1}>
+        <div className="banner" data-mode={mode === 'mock' ? 'mock' : (config?.issuer ? 'live' : 'off')} role="status" data-testid="banner">
+          <span className="mode-dot" aria-hidden="true" /><span className="mode-badge">{mode === 'mock' ? 'MOCK' : 'LIVE'}</span>{bannerText(config?.issuer, mode)}
+        </div>
+        <ReturnLink app="pingfederate" />
         {loadError && <p className="pt pt-error" role="alert">Could not load the lab: {loadError}</p>}
         {route.view === 'shelf' && <Shelf cards={cards} story={story} verticals={verticals} vertical={vertical} onVertical={setVertical} />}
         {route.view === 'run' && (card

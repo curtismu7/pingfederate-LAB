@@ -10,6 +10,7 @@ import { mockServer, BASE_ROUTES, CARDS, hop } from './testApi.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const go = (hash) => { window.location.hash = hash; };
+const primaries = () => [...document.querySelectorAll('main .primary')].map((b) => b.textContent);
 
 beforeEach(() => { go('#/'); setJsonView('form'); }); // the Form | JSON choice is shared module state
 afterEach(() => { vi.unstubAllGlobals(); });
@@ -51,6 +52,28 @@ describe('banner (rule 2)', () => {
   });
 });
 
+describe('shell bar', () => {
+  it('brand, mode badge, the current page pill and the TopMenu in header.shell-bar; <main> opens with the banner', async () => {
+    mockServer(BASE_ROUTES('https://pingfederate.mock.invalid'));
+    render(<App />);
+    await screen.findByTestId('banner');
+    const bar = document.querySelector('header.shell-bar');
+    expect(bar).not.toBeNull();
+    expect(document.querySelector('.app').querySelector(':scope > header')).toBe(bar);
+    expect(bar.querySelector('.shell-brand h1')).toHaveTextContent('PingFederate LAB');
+    expect(bar.querySelector('[data-testid=mode-badge]')).not.toBeNull();
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Shelf');
+    expect(bar.querySelector('[data-testid=top-menu]')).toHaveClass('shell-right');
+    expect(bar.nextElementSibling.tagName).toBe('MAIN');
+    expect(document.querySelector('main').firstElementChild).toBe(screen.getByTestId('banner'));
+    await act(async () => { go('#/playground'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Playground');
+    await act(async () => { go('#/run/dcr'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Shelf');
+    expect(document.querySelectorAll('.app > header')).toHaveLength(1); // one page-level header; a card's own <header> sits inside <main>
+  });
+});
+
 describe('routes', () => {
   it('parses the hash routes and refuses odd focus values', () => {
     expect(parseRoute('#/run/dcr')).toEqual({ view: 'run', card: 'dcr' });
@@ -73,6 +96,9 @@ describe('shelf', () => {
     expect(screen.getByRole('link', { name: 'Open cimd-lab' })).toHaveAttribute('href', 'http://127.0.0.1:5250');
     expect(screen.getByRole('link', { name: 'Set its address in Settings' })).toHaveAttribute('href', '#/settings/links.idJagUrl');
     expect(screen.getAllByText(/This lives in a sibling app/)).toHaveLength(2);
+    // One primary on the shelf: the first card's Open; the other Open links are secondary.
+    expect(primaries()).toEqual(['Open']);
+    expect(document.querySelector('main .primary')).toHaveAttribute('href', '#/run/signin');
     await userEvent.click(screen.getByLabelText('Retail'));
     expect(await screen.findByText('Scout registers itself.')).toBeInTheDocument();
   });
@@ -242,6 +268,8 @@ describe('card run', () => {
     expect(submit).toBeEnabled();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+    // One primary while the sign-in waits: the reopen Sign in; Run steps back.
+    expect(primaries()).toEqual(['Sign in']);
     await userEvent.click(within(document.querySelector('.creds-reopen')).getByRole('button', { name: 'Sign in' }));
     dialog = await screen.findByRole('dialog', { name: 'Sign in' });
     expect(within(dialog).getByLabelText('Username')).toHaveValue('alice');
@@ -352,10 +380,13 @@ describe('card run', () => {
     const panel = await screen.findByRole('region', { name: 'Approve on this page' });
     expect(within(panel).getByText('PingFederate asks bob to approve')).toBeInTheDocument();
     expect(within(panel).getByText('PAY-42')).toBeInTheDocument();
+    // One primary while the approval is on this page: Approve; Run steps back.
+    expect(primaries()).toEqual(['Approve']);
     await userEvent.click(within(panel).getByRole('button', { name: 'Approve' }));
     expect(server.calls.find((c) => c.path === '/api/cards/ciba/decision').body).toEqual({ decision: 'approve' });
     expect(await screen.findByText(/The approval request ended: approved/, {}, { timeout: 4000 })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Approve on this page' })).not.toBeInTheDocument();
+    expect(primaries()).toEqual(['Run']);
   });
 
   it('RAR runs with nothing typed when the server supplies the defaults (mock mode)', async () => {

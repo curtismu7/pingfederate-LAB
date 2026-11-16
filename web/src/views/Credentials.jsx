@@ -52,6 +52,7 @@ export default function Credentials({ onSubmit, busy, refused, idPrefix = 'cred'
     return (
       <p className="creds-reopen" role="status">
         {IDP} is waiting for a username and password.{' '}
+        {/* ui-pattern: allow P9 this Sign in renders only while a sign-in is pending, the state in which Run and Run all drop their primary class; the checker cannot see that exclusion across components */}
         <button type="button" className="primary" ref={reopenRef} onClick={() => setOpen(true)}>Sign in</button>
       </p>
     );

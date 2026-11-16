@@ -108,7 +108,7 @@ export default function DiagramView({ id, diagram: given, heading = 'h3' }) {
       <H className="dg-title">{diagram.title}</H>
       {diagram.lede && <p className="lede">{diagram.lede}</p>}
       <div className="dg-toolbar" role="group" aria-label={`${diagram.title}: diagram controls`}>
-        <button type="button" className="primary" onClick={() => dispatch({ type: 'simulate' })}>Simulate</button>
+        <button type="button" onClick={() => dispatch({ type: 'simulate' })}>Simulate</button>
         <button type="button" onClick={() => dispatch({ type: 'prev' })}>Back</button>
         <button type="button" onClick={() => dispatch({ type: 'next' })}>Next</button>
         {/* Pause only means something while a walkthrough is playing. */}

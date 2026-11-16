@@ -33,7 +33,7 @@ describe('hand-off from Customer Agent LAB', () => {
     const strip = screen.getByRole('note', { name: 'Opened from Customer Agent LAB' });
     expect(strip).toHaveTextContent('UC-LEARN13');
     expect(screen.getByTestId('banner').nextElementSibling).toBe(strip);
-    expect(document.querySelector('header.top .prefs > button.return-link--header')).not.toBeNull();
+    expect(document.querySelector('header.shell-bar .shell-right button.return-link--header')).not.toBeNull();
     expect(window.location.hash).toBe('#/run/rar');
     expect(window.location.search).toBe('?from=customer-agent&uc=UC-LEARN13&vertical=retail');
     await waitFor(() => expect(document.title).toMatch(/^RAR via PAR/));

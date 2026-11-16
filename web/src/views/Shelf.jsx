@@ -4,6 +4,8 @@ import { EXPLAIN } from '../content.js';
 // The home: one card per demo, in the owner's order. Link cards open the sibling apps.
 export default function Shelf({ cards, story, verticals, vertical, onVertical }) {
   const shown = cards.filter((c) => c.kind !== 'check');
+  // One primary per view (UI patterns section 9): the first card's Open is the red one; the rest are secondary.
+  const firstOpen = shown.find((c) => c.kind !== 'link')?.id;
   return (
     <section aria-labelledby="shelf-title">
       <div className="shelf-head">
@@ -38,7 +40,7 @@ export default function Shelf({ cards, story, verticals, vertical, onVertical })
                   : <a className="btn" href={`#/settings/links.${card.setting}`}>Set its address in Settings</a>}
               </>
             ) : (
-              <a className="btn primary" href={card.kind === 'playground' ? '#/playground' : `#/run/${card.id}`}>Open</a>
+              <a className={card.id === firstOpen ? 'btn primary' : 'btn'} href={card.kind === 'playground' ? '#/playground' : `#/run/${card.id}`}>Open</a>
             )}
           </li>
         ))}
