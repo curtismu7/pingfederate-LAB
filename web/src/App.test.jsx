@@ -66,6 +66,11 @@ describe('shell bar', () => {
     expect(bar.querySelector('[data-testid=top-menu]')).toHaveClass('shell-right');
     expect(bar.nextElementSibling.tagName).toBe('MAIN');
     expect(document.querySelector('main').firstElementChild).toBe(screen.getByTestId('banner'));
+    // The customer tagline sits in <main> below the banner, in muted text, never in the bar (same as pingone-LAB).
+    const tagline = await screen.findByText('Live', { selector: 'p.tagline' });
+    expect(tagline.parentElement).toBe(document.querySelector('main'));
+    expect(screen.getByTestId('banner').compareDocumentPosition(tagline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bar.querySelector('.tagline, .shell-tagline')).toBeNull();
     await act(async () => { go('#/playground'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
     expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Playground');
     await act(async () => { go('#/run/dcr'); window.dispatchEvent(new HashChangeEvent('hashchange')); });

@@ -146,13 +146,8 @@ export default function App() {
       <header className="shell-bar">
         <div className="shell-brand">
           <img className="shell-logo" src="/ping-logo.png" alt="Ping Identity" width="30" height="30" />
-          <div className="shell-brand__text">
-            <div className="shell-brand__name">
-              <h1><a href="#/">{name}</a></h1>
-              <span className={`shell-badge${mode === 'mock' ? '' : ' shell-badge--real'}`} data-testid="mode-badge">{mode === 'mock' ? 'Mock' : 'Real'}</span>
-            </div>
-            {config?.customer?.tagline && <p className="shell-tagline">{config.customer.tagline}</p>}
-          </div>
+          <h1><a href="#/">{name}</a></h1>
+          <span className={`shell-badge${mode === 'mock' ? '' : ' shell-badge--real'}`} data-testid="mode-badge">{mode === 'mock' ? 'Mock' : 'Real'}</span>
         </div>
         <nav className="shell-nav" aria-label="Main">
           {/* A card's run view opens from the shelf, so the Shelf pill stays current there. */}
@@ -182,6 +177,7 @@ export default function App() {
         </div>
         <ReturnLink app="pingfederate" />
         {loadError && <p className="pt pt-error" role="alert">Could not load the lab: {loadError}</p>}
+        {config?.customer?.tagline && <p className="tagline">{config.customer.tagline}</p>}
         {route.view === 'shelf' && <Shelf cards={cards} story={story} verticals={verticals} vertical={vertical} onVertical={setVertical} />}
         {route.view === 'run' && (card
           ? <RunView key={card.id} card={card} story={story?.cards?.[card.id]} onChanged={refresh} signedInAs={me.signedIn ? me.user?.subject : null}
