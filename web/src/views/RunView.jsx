@@ -39,6 +39,9 @@ export default function RunView({ card, story, onChanged, autoStart = false, onA
 
   // CIBA asks PingFederate to get one named user's approval: the typed user, or else whoever is signed in here.
   const cibaApprover = loginHint.trim() || signedInAs || '';
+  // One primary per view state (UI patterns section 9): while a sign-in waits for the person, or PingFederate has handed
+  // the CIBA approval to this page, that Sign in / Approve is the primary and Run steps back.
+  const handedOver = run.waiting >= 0 || (run.busy && cibaPending?.approval === 'lab');
   const start = () => run.runAll({ amount, currency, dpop, loginHint, bindingMessage, rarUser, fromAccount, toAccount });
   // StrictMode runs effects twice in development; the ref keeps it to one start.
   const autoStarted = useRef(false);
@@ -96,7 +99,8 @@ export default function RunView({ card, story, onChanged, autoStart = false, onA
       )}
 
       <div className="run-actions">
-        <button type="button" className="primary" onClick={start} disabled={run.busy || !card.ready || (card.id === 'ciba' && !cibaApprover) || (card.id === 'rar' && !rarReady)}>{run.busy ? 'Running...' : 'Run'}</button>
+        {/* ui-pattern: allow P9 Run is primary only while nothing is handed over (handedOver false); while a sign-in waits or the CIBA approval is on this page, the one primary is the Credentials reopen Sign in or the CibaApproval Approve, rendered only then. The checker cannot see that exclusion across components */}
+        <button type="button" className={handedOver ? undefined : 'primary'} onClick={start} disabled={run.busy || !card.ready || (card.id === 'ciba' && !cibaApprover) || (card.id === 'rar' && !rarReady)}>{run.busy ? 'Running...' : 'Run'}</button>
         <button type="button" onClick={reset} disabled={run.busy}>Reset this card</button>
       </div>
 

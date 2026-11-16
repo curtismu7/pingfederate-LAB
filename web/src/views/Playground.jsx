@@ -47,6 +47,8 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
   const needsSignIn = flowId === 'ciba' && !signedInAs && !loginHint.trim();
   // CIBA: while a poll runs, the latest "still pending" answer says whether PingFederate has asked this lab for the approval.
   const cibaPending = flowId === 'ciba' ? run.results.map((r) => r?.data).filter((d) => d?.state === 'pending').at(-1) : null;
+  // One primary per view state: while a sign-in waits or the CIBA approval is on this page, that Sign in / Approve is the primary.
+  const handedOver = run.waiting >= 0 || (run.busy && cibaPending?.approval === 'lab');
 
   // The trace entries each step added (the server returns the run's trace so far with every answer).
   const perStep = useMemo(() => {
@@ -86,7 +88,8 @@ function FlowPanel({ flowId, ready, onChanged, signedInAs }) {
         </label>
       )}
       <div className="run-actions">
-        <button type="button" className="primary" onClick={() => run.runAll(options)} disabled={run.busy || !ready || needsSignIn}>Run all</button>
+        {/* ui-pattern: allow P9 Run all is primary only while nothing is handed over (handedOver false); while a sign-in waits or the CIBA approval is on this page, the one primary is the Credentials reopen Sign in or the CibaApproval Approve, rendered only then. The checker cannot see that exclusion across components */}
+        <button type="button" className={handedOver ? undefined : 'primary'} onClick={() => run.runAll(options)} disabled={run.busy || !ready || needsSignIn}>Run all</button>
         <button type="button" onClick={clear} disabled={run.busy}>Clear</button>
         {!ready && <span className="hint">Not ready: see the card on the shelf for what is missing.</span>}
         {ready && needsSignIn && <span className="hint">Type the user who should approve, or <a href="#/run/signin">sign in</a> and leave it empty to use yourself.</span>}

@@ -18,6 +18,7 @@ export default function CibaApproval({ pending }) {
           <p className="creds-title"><strong>PingFederate asks {pending.loginHint} to approve</strong>{pending.bindingMessage ? <>: <code>{pending.bindingMessage}</code></> : null}.
             {' '}<span className="hint">In production this reaches their phone; here PingFederate's web approver brings it to this page.</span></p>
           <div className="run-actions">
+            {/* ui-pattern: allow P9 Approve renders only while PingFederate has handed the CIBA approval to this page, the state in which Run and Run all drop their primary class; the checker cannot see that exclusion across components */}
             <button type="button" className="primary" onClick={() => decide('approve')} disabled={Boolean(decision?.sent)}>Approve</button>
             <button type="button" onClick={() => decide('deny')} disabled={Boolean(decision?.sent)}>Deny</button>
           </div>
