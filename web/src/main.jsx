@@ -13,6 +13,7 @@ import '@fontsource/ibm-plex-mono/600.css';
 import './standalone-ui.css';
 import './top-menu/top-menu.css';
 import './components/JsonPane.css';
+import './components/VerifyMark.css';
 import App from './App.jsx';
 import './app.css';
 
