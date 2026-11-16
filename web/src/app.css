@@ -28,34 +28,36 @@ strong, b { font-weight: 700; }
 fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 12px 0; padding: 10px 14px 14px; min-width: 0; }
 legend { font-weight: 700; padding: 0 6px; }
 
-/* Banner (shared .banner) and header. */
+/* Banner (shared .banner). */
 .banner { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; }
 .mode-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; background: var(--status-ok); animation: pulse 2.4s infinite; }
 .banner[data-mode="mock"] .mode-dot { background: var(--accent); }
 .banner[data-mode="off"] .mode-dot { background: var(--muted); animation: none; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--surface-2); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-.mode-badge { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.06em; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; }
-.top { display: grid; grid-template-columns: 1fr auto auto; gap: 10px 20px; align-items: center; padding: 12px 16px 8px; border-bottom: none; background: var(--box-dark); color: var(--on-box); max-width: none; width: 100%; margin: 0 auto; position: relative; }
-.top > :focus-visible { outline: 3px solid var(--on-box); outline-offset: 2px; }
-.brand { min-width: 0; display: flex; gap: 12px; align-items: center; }
-.brand__logo { width: 40px; height: 40px; flex: 0 0 auto; }
-.brand h1 { margin: 0; font-size: 1.6em; }
-.brand h1 a { text-decoration: none; }
-.tagline { margin: 2px 0 0; color: var(--muted); font-size: 0.92em; }
-.nav { display: flex; gap: 6px; flex-wrap: wrap; }
-.nav a { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; text-decoration: none; font-weight: 600; }
-.nav a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.who { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.prefs { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; font-size: 0.9em; }
-.mode-toggle { display: inline-flex; gap: 0; align-items: center; }
+.mode-badge { flex: 0 0 auto; font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.06em; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; }
+/* Shell bar (STANDALONE-UI-PATTERNS.md section 1): Core Dark in both themes, Ping Red gradient rule, full-bleed (the -16px
+   cancels the body gutter); wraps at 600px. position: relative anchors the TopMenu sign-in slot. */
+.shell-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 0 -16px; padding: 10px 20px;
+  background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; }
+.shell-brand { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; letter-spacing: 0.02em; }
+.shell-brand__text { min-width: 0; }
+.shell-brand__name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.shell-logo { width: 30px; height: 30px; flex: 0 0 auto; }
+.shell-bar h1 { margin: 0; color: var(--on-box); font-size: 1.3em; }
+.shell-bar h1 a { color: inherit; text-decoration: none; }
+.shell-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75em var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.shell-badge--real { background: var(--surface-2); color: var(--status-warn); border-color: var(--status-warn); }
+.shell-tagline { margin: 2px 0 0; color: var(--on-box); font-weight: 400; font-size: 0.85em; letter-spacing: 0; }
+.shell-nav { display: flex; gap: 4px; flex: 1 1 auto; } /* one row of pills; when the bar is full the TopMenu wraps below, not the nav */
+.shell-nav a { padding: 5px 12px; border-radius: 999px; border: 1px solid transparent; color: var(--on-box); text-decoration: none; font-size: 0.9em; font-weight: 500; white-space: nowrap; }
+.shell-nav a:hover { border-color: var(--on-box); }
+.shell-nav a[aria-current="page"] { background: var(--accent-gradient); color: var(--on-accent); font-weight: 600; }
+.shell-bar .shell-right { margin-left: auto; } /* TopMenu renders .top-menu.shell-right; its own layout stays */
 .workspace-switch { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
 .workspace-switch__input { width: 14ch; min-height: 40px; }
 .workspace-switch__hint { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.mode-toggle__label { margin-right: 8px; font-weight: 600; }
-.mode-toggle__button:first-of-type { border-radius: 8px 0 0 8px; }
-.mode-toggle__button:last-of-type { border-radius: 0 8px 8px 0; margin-left: -1px; }
-main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex: 1; min-width: 0; }
-.foot { border-top: 1px solid var(--border); padding: 12px 0; color: var(--muted); font-size: 0.85em; max-width: 1240px; width: 100%; margin: 0 auto; }
+main { padding: 0 0 48px; max-width: 1100px; width: 100%; margin: 0 auto; flex: 1; min-width: 0; }
+.foot { border-top: 1px solid var(--border); padding: 12px 0; color: var(--muted); font-size: 0.85em; max-width: 1100px; width: 100%; margin: 0 auto; }
 .crumbs { margin: 12px 0 0; font-size: 0.9em; color: var(--muted); }
 
 /* Shelf. */
@@ -234,18 +236,17 @@ main { padding: 8px 0 48px; max-width: 1240px; width: 100%; margin: 0 auto; flex
 .creds-reopen { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
 
 @media (max-width: 900px) {
-  .top { grid-template-columns: 1fr; }
-  .prefs { justify-content: flex-start; }
   .pg { grid-template-columns: 1fr; }
   .pg-nav { position: static; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
   .set-row { grid-template-columns: 1fr; }
   .set-row .check { grid-column: 1; }
 }
 @media (max-width: 600px) {
+  .shell-bar { gap: 10px; padding: 10px 16px; }
+  .shell-nav { order: 3; flex-basis: 100%; }
   .pg-explain__facts > div { grid-template-columns: 1fr; gap: 0; }
   .step { grid-template-columns: 28px 1fr; }
   .step .chip, .step button { grid-column: 2; justify-self: start; }
   .dg-canvas { height: 340px; }
   h2 { font-size: 1.6em; }
 }
-.mode-toggle button:disabled { opacity: 0.6; }

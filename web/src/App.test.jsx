@@ -51,6 +51,28 @@ describe('banner (rule 2)', () => {
   });
 });
 
+describe('shell bar', () => {
+  it('brand, mode badge, the current page pill and the TopMenu in header.shell-bar; <main> opens with the banner', async () => {
+    mockServer(BASE_ROUTES('https://pingfederate.mock.invalid'));
+    render(<App />);
+    await screen.findByTestId('banner');
+    const bar = document.querySelector('header.shell-bar');
+    expect(bar).not.toBeNull();
+    expect(document.querySelector('.app').querySelector(':scope > header')).toBe(bar);
+    expect(bar.querySelector('.shell-brand h1')).toHaveTextContent('PingFederate LAB');
+    expect(bar.querySelector('[data-testid=mode-badge]')).not.toBeNull();
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Shelf');
+    expect(bar.querySelector('[data-testid=top-menu]')).toHaveClass('shell-right');
+    expect(bar.nextElementSibling.tagName).toBe('MAIN');
+    expect(document.querySelector('main').firstElementChild).toBe(screen.getByTestId('banner'));
+    await act(async () => { go('#/playground'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Playground');
+    await act(async () => { go('#/run/dcr'); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent('Shelf');
+    expect(document.querySelectorAll('.app > header')).toHaveLength(1); // one page-level header; a card's own <header> sits inside <main>
+  });
+});
+
 describe('routes', () => {
   it('parses the hash routes and refuses odd focus values', () => {
     expect(parseRoute('#/run/dcr')).toEqual({ view: 'run', card: 'dcr' });
