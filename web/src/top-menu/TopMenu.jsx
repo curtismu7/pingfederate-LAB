@@ -58,6 +58,7 @@ export default function TopMenu({
   shelfUrl,
   help,
   version,
+  onVersion,
   onReset,
   showSignIn = false,
   signedIn,
