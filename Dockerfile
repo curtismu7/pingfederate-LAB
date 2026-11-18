@@ -6,6 +6,7 @@ COPY server/package.json server/
 COPY web/package.json web/
 RUN npm ci --no-audit --no-fund
 COPY web web
+COPY docs docs
 RUN npm run build -w web
 
 FROM node:26-alpine
