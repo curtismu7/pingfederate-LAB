@@ -51,7 +51,16 @@ function Counter() {
 }
 
 beforeEach(() => { window.innerWidth = 1280; window.innerHeight = 900; localStorage.clear(); });
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); document.documentElement.removeAttribute("data-theme"); delete window.matchMedia; });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+  document.documentElement.removeAttribute("data-theme");
+  // Restore jsdom's native matchMedia rather than deleting it: a `delete` leaves
+  // later test files (same worker) without matchMedia at all, so FloatingDialog
+  // renders the pop-out button and the dialogs tests flake with worker order.
+  if (typeof window.__fdNativeMatchMedia === "function") { window.matchMedia = window.__fdNativeMatchMedia; }
+  delete window.__fdNativeMatchMedia;
+});
 
 describe("layout", () => {
   test("a named dialog with a focusable title bar, eight resize handles, pop-out and close", () => {
@@ -311,6 +320,7 @@ describe("persistence", () => {
 
 describe("narrow screens", () => {
   test("at 600px and below it is a sheet: no handles, title bar not a move target, drag does nothing", () => {
+    if (!window.__fdNativeMatchMedia) window.__fdNativeMatchMedia = window.matchMedia;
     window.matchMedia = vi.fn((q) => ({ matches: q === "(max-width: 600px)", addEventListener: () => {}, removeEventListener: () => {} }));
     render(<Harness />);
     fireEvent.click(screen.getByText("opener"));
