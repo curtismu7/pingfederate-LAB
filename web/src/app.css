@@ -62,7 +62,14 @@ main { padding: 0 0 48px; max-width: 2200px; width: 100%; margin: 0 auto; flex: 
 .shelf-head { display: grid; gap: 4px; margin-top: 12px; }
 .intro { max-width: 75ch; margin: 0; font-size: 1.05em; }
 .verticals { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.shelf { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.shelf { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .shelf { grid-template-columns: 1fr; } }
+.step-num { display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem; border-radius: 999px;
+  background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75rem var(--font-mono);
+  margin-right: 0.5em; vertical-align: 2px; }
+h2[data-n]::before { content: attr(data-n); display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem;
+  border-radius: 999px; background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75rem var(--font-mono);
+  margin-right: 0.5em; vertical-align: 2px; }
 .shelf-card { background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--text); border-radius: 8px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .shelf-card.kind-link { border-top-style: dashed; background: var(--surface-2); }
 .shelf-card.kind-playground { border-top-color: var(--accent); }
