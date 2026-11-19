@@ -9,7 +9,7 @@ export default function Shelf({ cards, story, verticals, vertical, onVertical })
   return (
     <section aria-labelledby="shelf-title">
       <div className="shelf-head">
-        <h2 id="shelf-title">The shelf</h2>
+        <h2 id="shelf-title" data-n="1">The shelf</h2>
         {story?.intro?.[0] && <p className="intro">{story.intro[0]}</p>}
         {verticals.length > 0 && (
           <fieldset className="verticals">
