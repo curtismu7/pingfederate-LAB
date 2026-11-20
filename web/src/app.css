@@ -255,3 +255,12 @@ h2[data-n]::before { content: attr(data-n); display: inline-grid; place-items: c
   .dg-canvas { height: 340px; }
   h2 { font-size: 1.6em; }
 }
+
+/* An expanded box (diagram kit §8c): give it a width the details can be read at. */
+.react-flow__node.dk-open {
+  width: 320px;
+}
+.react-flow__node.dk-open .dg-node {
+  max-height: 420px;
+  overflow-y: auto;
+}
