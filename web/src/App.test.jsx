@@ -15,6 +15,14 @@ const primaries = () => [...document.querySelectorAll('main .primary')].map((b) 
 beforeEach(() => { go('#/'); setJsonView('form'); }); // the Form | JSON choice is shared module state
 afterEach(() => { vi.unstubAllGlobals(); });
 
+// Hold GET /api/config on a promise (the page shows MOCK until it answers); call after mockServer, which installs the fetch it wraps.
+function holdConfig() {
+  let release; const held = new Promise((r) => { release = r; });
+  const inner = globalThis.fetch;
+  vi.stubGlobal('fetch', (path, init) => (path === '/api/config' ? held.then(() => inner(path, init)) : inner(path, init)));
+  return { release };
+}
+
 describe('Real-or-mock modal (rule 2)', () => {
   it('has a line for live with the issuer, not connected, mock, and not known yet', () => {
     expect(MODE_LINES.live('https://pf.example')).toBe('Every call goes to your PingFederate at https://pf.example. Nothing here is simulated.');
@@ -22,10 +30,11 @@ describe('Real-or-mock modal (rule 2)', () => {
     expect(MODE_LINES.mock).toBe('A simulated PingFederate inside this lab. Nothing leaves this machine.');
     expect(MODE_LINES.unknown).toMatch(/has not said which mode/);
   });
-  it('opens on MOCK with the lab line, says MOCK (unknown line) before /api/config answers, and Got it and Escape close it for the session', async () => {
+  it('opens on MOCK with the lab line, says MOCK (unknown line) before /api/config answers, and Got it closes it for the session', async () => {
     const routes = BASE_ROUTES('https://pingfederate.mock.invalid');
-    let release; const held = new Promise((r) => { release = r; });
-    mockServer({ ...routes, 'GET /api/config': async () => { await held; return { body: { ...routes['GET /api/config'], mode: 'mock' } }; } });
+    const config = { mode: 'mock', ...routes['GET /api/config'] };
+    mockServer({ ...routes, 'GET /api/config': config });
+    const { release } = holdConfig();
     const { unmount } = render(<App />);
     const early = screen.getByTestId('mode-modal');
     expect(early).toHaveAttribute('data-mode', 'mock');
@@ -37,7 +46,7 @@ describe('Real-or-mock modal (rule 2)', () => {
     await userEvent.click(screen.getByTestId('mode-modal-ok'));
     expect(screen.queryByTestId('mode-modal')).toBeNull();
     unmount();
-    mockServer(routes);
+    mockServer({ ...routes, 'GET /api/config': config });
     render(<App />);
     await screen.findByTestId('mode-select');
     expect(screen.queryByTestId('mode-modal')).toBeNull();
@@ -81,15 +90,15 @@ describe('Real-or-mock modal (rule 2)', () => {
   });
   it('a lab that is already Live shows MOCK until /api/config answers, then REAL', async () => {
     const routes = BASE_ROUTES('https://pf.example');
-    let release; const held = new Promise((r) => { release = r; });
-    mockServer({ ...routes, 'GET /api/config': async () => { await held; return { body: { ...routes['GET /api/config'], mode: 'live', issuer: 'https://pf.example' } }; } });
+    mockServer({ ...routes, 'GET /api/config': { mode: 'live', ...routes['GET /api/config'] } });
+    const { release } = holdConfig();
     render(<App />);
     expect(screen.getByTestId('mode-modal')).toHaveAttribute('data-mode', 'mock');
     release();
     await waitFor(() => expect(screen.getByTestId('mode-modal')).toHaveAttribute('data-mode', 'real'));
   });
   it('there is no simulation banner on any view; the mode badge and toggle stay in presenter mode', async () => {
-    mockServer(BASE_ROUTES('https://pingfederate.mock.invalid'));
+    mockServer({ ...BASE_ROUTES('https://pingfederate.mock.invalid'), 'GET /api/config': { mode: 'mock', ...BASE_ROUTES()['GET /api/config'], issuer: 'https://pingfederate.mock.invalid' } });
     render(<App />);
     await screen.findByTestId('mode-select');
     await userEvent.click(screen.getByTestId('mode-modal-ok'));
@@ -256,6 +265,8 @@ describe('settings', () => {
 });
 
 describe('card run', () => {
+  // The Real-or-mock modal is itself a dialog: these tests count and close the sign-in dialog, so the modal is dismissed up front.
+  beforeEach(() => { sessionStorage.setItem('pfl-mode-seen-mock', '1'); sessionStorage.setItem('pfl-mode-seen-real', '1'); });
   it('DCR runs its four steps in order and shows proof points, the live sequence and the raw trace', async () => {
     const trace = [hop('initial-access-token', 'Get an initial access token', 'POST', 'https://pf.example/as/token.oauth2', 200)];
     const t2 = [...trace, hop('register-anonymous', 'Register with no initial access token', 'POST', 'https://pf.example/as/clients.oauth2', 401, { error: 'invalid_token' }), hop('register', 'Register with the initial access token', 'POST', 'https://pf.example/as/clients.oauth2', 201)];
