@@ -14,6 +14,7 @@ import { currentWorkspace } from "./api.js";
 import ReturnLink from "./return-link/ReturnLink.jsx";
 import { readReturnContext } from "./return-link/returnTargets.js";
 import { cardFor, verticalFor } from "./handoffMap.js";
+import ModeModal from "./mode-modal/ModeModal.jsx";
 
 // Opened from Customer Agent LAB: on load, with no route in the hash yet, open the mapped card (handoffMap.js). The hash is written
 // back so the router and the address bar agree; the query (and with it the strip) stays.
@@ -32,13 +33,14 @@ export function parseRoute(hash) {
   return { view: 'shelf' };
 }
 
-// Rule 2: says on every view, presenter mode included, whether the lab is on the mock or on a real PingFederate.
-export function bannerText(issuer, mode = 'live') {
-  if (mode === 'mock') return 'Mock: a simulated PingFederate inside this lab. Nothing leaves this machine.';
-  return issuer
-    ? `Live: every call goes to your PingFederate at ${issuer}. Nothing here is simulated.`
-    : 'Not connected: set your PingFederate in Settings.';
-}
+// Rule 2 (amended 2026-11-28): the Real-or-mock modal says whether the lab is on the mock or on a real PingFederate (it replaced the banner).
+// Until /api/config has answered it says MOCK with the "unknown" line; Live is this lab's word for REAL, and Live with no PingFederate set is "off".
+export const MODE_LINES = {
+  unknown: 'The lab server has not said which mode this is yet, so treat everything as simulated until it does.',
+  mock: 'A simulated PingFederate inside this lab. Nothing leaves this machine.',
+  live: (issuer) => `Every call goes to your PingFederate at ${issuer}. Nothing here is simulated.`,
+  off: 'Not connected: set your PingFederate in Settings.',
+};
 
 export function viewTitle(route, cards, name = 'PingFederate LAB') {
   const lab = name || 'PingFederate LAB';
@@ -184,9 +186,6 @@ export default function App() {
         </TopMenu>
       </header>
       <main id="main" tabIndex={-1}>
-        <div className="banner" data-mode={mode === 'mock' ? 'mock' : (config?.issuer ? 'live' : 'off')} role="status" data-testid="banner">
-          <span className="mode-dot" aria-hidden="true" /><span className="mode-badge">{mode === 'mock' ? 'MOCK' : 'LIVE'}</span>{bannerText(config?.issuer, mode)}
-        </div>
         <ReturnLink app="pingfederate" />
         {loadError && <p className="pt pt-error" role="alert">Could not load the lab: {loadError}</p>}
         {config?.customer?.tagline && <p className="tagline">{config.customer.tagline}</p>}
@@ -203,6 +202,7 @@ export default function App() {
       <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talkSteps} />
 
       </footer>
+      <ModeModal mode={config && mode !== 'mock' ? 'real' : 'mock'} lines={{ mock: config ? MODE_LINES.mock : MODE_LINES.unknown, real: config?.issuer ? MODE_LINES.live(config.issuer) : MODE_LINES.off }} storageKey="pfl-mode" />
     </div>
   );
 }
