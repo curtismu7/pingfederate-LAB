@@ -3,6 +3,8 @@ import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 afterEach(cleanup);
+// The Real-or-mock modal remembers a dismissal in sessionStorage: start every test with it open.
+afterEach(() => { try { sessionStorage.clear(); } catch { /* none */ } });
 
 class RO { observe() {} unobserve() {} disconnect() {} }
 globalThis.ResizeObserver ??= RO;

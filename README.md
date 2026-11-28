@@ -77,7 +77,7 @@ If the port is taken:
 
 ## Mock and live modes
 
-The **Mock / Live** toggle is in the header on every page, presenter mode included. The banner shows the same mode. Switching signs everyone out, because a token from one PingFederate means nothing to the other.
+The **Mock / Live** toggle is in the header on every page, presenter mode included. The Real-or-mock modal opens the page on the same mode (MOCK or REAL) and the mode badge in the header keeps saying it. Switching signs everyone out, because a token from one PingFederate means nothing to the other.
 
 - If you never chose, the lab starts in live mode when an issuer is saved, otherwise in mock mode. Saving an issuer later does not switch modes; only the toggle does.
 - Mock sign-in (rule 11) needs `ALLOW_MOCK_SIGNIN=1`. The Docker form sets it. A plain `npm start` sets it for you only when the lab is bound to 127.0.0.1, `LAB_PUBLISH` is unset and no PingFederate is saved in Settings; an explicit `ALLOW_MOCK_SIGNIN` (even `0`) always wins. It is refused behind a proxy (`Forwarded` or `X-Forwarded-*` headers), except the family launcher at `https://local.ping-devops.com:8443` reaching the lab by its `LAB_ALLOWED_HOSTS` name, and on a non-loopback bind, unless `LAB_PUBLISH=loopback` says the port is published on 127.0.0.1 only (the Docker form does). `NODE_ENV=production` is not a guard: the Docker image runs with it. While it is refused, `GET /api/mode` sends no mock user name or password.

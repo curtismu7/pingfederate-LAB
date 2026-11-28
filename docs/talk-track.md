@@ -1,8 +1,8 @@
 # Talk track: PingFederate LAB
 
 About 12 minutes for the core cards; each card also stands alone. Use **Mock** to rehearse or when there is no
-PingFederate (nothing leaves the laptop); use **Live** to show your own PingFederate. Say which one is on: the banner
-always does, and Presenter mode keeps it on screen.
+PingFederate (nothing leaves the laptop); use **Live** to show your own PingFederate. Say which one is on: the Real-or-mock
+modal says it when the page opens, and the mode badge in the header keeps saying it, Presenter mode included.
 
 ## Before you start
 

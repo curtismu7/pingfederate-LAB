@@ -224,7 +224,7 @@ export function createApp({ port, fetchImpl = globalThis.fetch, settingsFile, no
 
   app.get('/api/cards', wrap(() => ({ cards: cardList(settings, mode() === 'mock' ? { mockUser: MOCK_USER.username } : {}) })));
 
-  // What the page needs to draw itself: branding, vocabulary, and which PingFederate it talks to (for the banner).
+  // What the page needs to draw itself: branding, vocabulary, and which PingFederate it talks to (for the Real-or-mock modal's line).
   app.get('/api/config', wrap((req) => ({ customer: publicConfig(customer), issuer: settings.value('pf', 'issuer') || null, mode: mode(), workspace: req.session.workspace })));
   // Rule 19: what the Mock/Real toggle needs.
   app.get('/api/info', wrap((req) => {

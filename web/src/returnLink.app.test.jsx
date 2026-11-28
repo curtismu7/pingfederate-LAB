@@ -26,13 +26,14 @@ describe('hand-off from Customer Agent LAB', () => {
     expect(verticalFor({ vertical: 'constructor' })).toBeNull();
   });
 
-  it('UC-LEARN13 in retail: banner then strip, header Back, the RAR card and the retail vertical are preselected', async () => {
+  it('UC-LEARN13 in retail: the strip is first in the page, header Back, the RAR card and the retail vertical are preselected', async () => {
     const server = mockServer(BASE_ROUTES());
     at('/?from=customer-agent&uc=UC-LEARN13&vertical=retail');
     render(<App />);
     const strip = screen.getByRole('note', { name: 'Opened from Customer Agent LAB' });
     expect(strip).toHaveTextContent('UC-LEARN13');
-    expect(screen.getByTestId('banner').nextElementSibling).toBe(strip);
+    expect(document.querySelector('main').firstElementChild).toBe(strip);
+    expect(screen.queryByTestId('banner')).toBeNull();
     expect(document.querySelector('header.shell-bar .shell-right button.return-link--header')).not.toBeNull();
     expect(window.location.hash).toBe('#/run/rar');
     expect(window.location.search).toBe('?from=customer-agent&uc=UC-LEARN13&vertical=retail');

@@ -28,14 +28,7 @@ strong, b { font-weight: 700; }
 fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 12px 0; padding: 10px 14px 14px; min-width: 0; }
 legend { font-weight: 700; padding: 0 6px; }
 
-/* Banner (shared .banner). */
-.banner { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; }
-.tagline { margin: 10px 0 0; color: var(--muted); max-width: 75ch; } /* the customer tagline, below the banner in <main> */
-.mode-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; background: var(--status-ok); animation: pulse 2.4s infinite; }
-.banner[data-mode="mock"] .mode-dot { background: var(--accent); }
-.banner[data-mode="off"] .mode-dot { background: var(--muted); animation: none; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--surface-2); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-.mode-badge { flex: 0 0 auto; font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.06em; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; }
+.tagline { margin: 10px 0 0; color: var(--muted); max-width: 75ch; } /* the customer tagline, at the top of <main> */
 /* Shell bar (STANDALONE-UI-PATTERNS.md section 1): Core Dark in both themes, Ping Red gradient rule, full-bleed (the -16px
    cancels the body gutter); wraps at 600px. position: relative anchors the TopMenu sign-in slot. */
 .shell-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: 0 -16px; padding: 10px 20px;

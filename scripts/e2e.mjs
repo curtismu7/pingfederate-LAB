@@ -46,9 +46,11 @@ async function main() {
   let context;
   let page;
   // A fresh browser context (no cookies), so a flow's sign-in dialog runs for every flow, not just the first one.
-  const freshPage = async (scheme = 'light', size = { width: 1280, height: 900 }) => {
+  // The Real-or-mock modal is pre-dismissed (sessionStorage) in every context except the one that checks it, so it never covers a click.
+  const freshPage = async (scheme = 'light', size = { width: 1280, height: 900 }, { modal = false } = {}) => {
     await context?.close();
     context = await browser.newContext({ viewport: size, colorScheme: scheme });
+    if (!modal) await context.addInitScript(() => { try { sessionStorage.setItem('pfl-mode-seen-mock', '1'); sessionStorage.setItem('pfl-mode-seen-real', '1'); } catch { /* blocked */ } });
     await context.route('**/*', (route) => {
       const url = route.request().url();
       requests.push(url);
@@ -58,6 +60,19 @@ async function main() {
     page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
     page.on('console', (m) => { if (m.type() === 'error') problems.push(`console: ${m.text()}`); });
   };
+
+  // The modal itself: a fresh session opens on MOCK, Got it closes it, a reload in the same session does not bring it back, and there is no simulation banner.
+  await freshPage('light', { width: 1280, height: 900 }, { modal: true });
+  await page.goto(`${base}/`);
+  const modal = page.getByTestId('mode-modal');
+  await modal.waitFor({ timeout: 15000 });
+  await page.locator('[data-testid="mode-modal"][data-mode="mock"]').waitFor();
+  check('a fresh session opens on the MOCK modal with the lab line', /^MOCK/.test((await modal.textContent()).trim()) && /simulated PingFederate inside this lab/.test(await modal.textContent()));
+  await page.getByTestId('mode-modal-ok').click();
+  check('Got it closes the modal', await page.getByTestId('mode-modal').count() === 0);
+  await page.reload();
+  await page.getByTestId('mode-badge').waitFor();
+  check('a reload in the same session does not show the modal again, and there is no simulation banner', await page.getByTestId('mode-modal').count() === 0 && await page.getByTestId('banner').count() === 0);
 
   const openFlow = async (title) => {
     await page.goto(`${base}/#/playground`);
